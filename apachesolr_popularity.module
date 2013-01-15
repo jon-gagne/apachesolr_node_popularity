@@ -5,3 +5,28 @@
  * Tracks node popularity and extends Solr ranking for each node with its popularity.
  */
 
+/**
+ * Implements hook_exit().
+ *
+ * Gathers statistics for page accesses.
+ */
+function apachesolr_popularity_exit() {
+  
+  global $user;
+
+  drupal_bootstrap(DRUPAL_BOOTSTRAP_VARIABLES);
+
+  if (variable_get('statistics_count_content_views', 0)) {
+    // We are counting content views.
+    if (arg(0) == 'node' && is_numeric(arg(1)) && arg(2) == NULL) {
+      // A node has been viewed, so update the node's counters.
+      db_merge('node_counter')
+        ->key(array('nid' => arg(1)))
+        ->fields(array(
+          'recentcount' => 1,
+        ))
+        ->expression('recentcount', 'recentcount + 1')
+        ->execute();
+    }
+  }
+}
