@@ -1,0 +1,7 @@
+<?php
+
+/**
+ * @file
+ * Tracks node popularity and extends Solr ranking for each node with its popularity.
+ */
+
