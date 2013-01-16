@@ -18,7 +18,7 @@ function statistics_uninstall() {
  */
 function apachesolr_popularity_schema() {
   
-  $schema['node_counter'] = array(
+  $schema['popularity_counter'] = array(
     'description' => 'Access statistics for {node}s.',
     'fields' => array(
       'nid' => array(
@@ -35,8 +35,8 @@ function apachesolr_popularity_schema() {
         'default' => 0,
         'size' => 'medium',
       ),
-      'totalcount' => array(
-        'description' => 'The total number of times the {node} has been viewed.',
+      'popularity' => array(
+        'description' => 'The node popularity.',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,

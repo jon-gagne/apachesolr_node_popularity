@@ -24,8 +24,10 @@ function apachesolr_popularity_exit() {
         ->key(array('nid' => arg(1)))
         ->fields(array(
           'recentcount' => 1,
+          'popularity' => 1,
         ))
         ->expression('recentcount', 'recentcount + 1')
+        ->expression('popularity', 'popularity + 1')
         ->execute();
     }
   }
@@ -34,12 +36,11 @@ function apachesolr_popularity_exit() {
 /**
  * Implements hook_menu().
  */
-function statistics_menu() {
+function apachesolr_popularity_menu() {
   $items['admin/reports/popularpages'] = array(
     'title' => 'Popular pages',
     'description' => 'View most popular pages.',
-    'page callback' => 'apachesolr_top_pages',
-//TODO    'page callback' => 'statistics_top_pages',
+    'page callback' => 'apachesolr_popularity_top_pages',
     'access arguments' => array('administer search'),
 //  'access arguments' => array('access statistics'),
     'file' => 'apachesolr_popularity.admin.inc',
