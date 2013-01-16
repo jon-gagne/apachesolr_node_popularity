@@ -49,7 +49,7 @@ function apachesolr_popularity_menu() {
     'title' => 'Apache Solr Popularity',
     'description' => 'Configure Apache Solr Popularity Tracking.',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('apachesolr_popularity_setting_form'),
+    'page arguments' => array('apachesolr_popularity_settings_form'),
 //  'page arguments' => array('statistics_settings_form'),
     'access arguments' => array('administer search'),
 //  'access arguments' => array('access statistics'),
