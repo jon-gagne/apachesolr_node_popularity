@@ -21,7 +21,7 @@ function apachesolr_popularity_top_pages() {
     array('data' => t('Page'), 'field' => 'nid'),
   );
 
-  $query = db_select('popularity_counter', 'p', array('target' => 'slave'))->extend('PagerDefault')->extend('TableSort');;
+  $query = db_select('apachesolr_popularity_counter', 'p', array('target' => 'slave'))->extend('PagerDefault')->extend('TableSort');;
   //$query->addExpression('COUNT(path)', 'hits');
   $query->fields('p', array('popularity', 'nid'));
   $query
