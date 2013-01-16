@@ -10,7 +10,7 @@
  */
 function statistics_uninstall() {
   // Remove variables.
-  //variable_del('variable_name');
+  variable_del('popularity_tracker');
 }
 
 /**
