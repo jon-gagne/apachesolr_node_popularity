@@ -46,7 +46,7 @@ function apachesolr_popularity_menu() {
     'file' => 'apachesolr_popularity.admin.inc',
   );
   $items['admin/config/search/apachesolr/apachesolr_popularity'] = array(
-    'title' => 'Apache Solr Popularity',
+    'title' => 'Node Popularity',
     'description' => 'Configure Apache Solr Popularity Tracking.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('apachesolr_popularity_settings_form'),
