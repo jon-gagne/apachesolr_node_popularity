@@ -20,7 +20,7 @@ function apachesolr_popularity_exit() {
     // We are counting content views.
     if (arg(0) == 'node' && is_numeric(arg(1)) && arg(2) == NULL) {
       // A node has been viewed, so update the node's counters.
-      db_merge('node_counter')
+      db_merge('apachesolr_popularity_counter')
         ->key(array('nid' => arg(1)))
         ->fields(array(
           'recentcount' => 1,
