@@ -14,6 +14,14 @@ function statistics_uninstall() {
 }
 
 /**
+ * Implements hook_install().
+ */
+function apachesolr_popularity_install() {
+  variable_set('apachesolr_popularity_day_timestamp', REQUEST_TIME);
+  variable_set('popularity_tracker', 0);
+}
+
+/**
  * Implements hook_schema().
  */
 function apachesolr_popularity_schema() {

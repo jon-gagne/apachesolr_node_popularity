@@ -65,7 +65,7 @@ function apachesolr_popularity_menu() {
  */
 function apachesolr_popularity_cron() {
   
-  //$apachesolr_popularity_timestamp = variable_get('apachesolr_popularity_day_timestamp', '');
+  $apachesolr_popularity_timestamp = variable_get('apachesolr_popularity_day_timestamp', '');
  
   // TODO: get current time stamp to determine $elapsed time
   $elapsed_time = 0.2;
@@ -74,42 +74,41 @@ function apachesolr_popularity_cron() {
   // TODO: CREATE VARIABLE $apachesolr_popularity_timestamp
   
   // TODO: CORRECT THIS SO IT MAKES SENSE
-  if ((REQUEST_TIME - $apachesolr_popularity_timestamp) >= 86400) {
+  //if ((REQUEST_TIME - $apachesolr_popularity_timestamp) >= 86400) {
   
     // TODO: get this variable from a configurable form in Apache Solr Node Popularity config 
-    $daily_decay_rate = 0.95;
-    
-    $decay_constant = log($daily_decay_rate);
-    $epoch_decay_rate = exp($decay_constant * $elapsed_time);
+  $daily_decay_rate = 0.95;
 
-    $query = db_query("SELECT * FROM {apachesolr_popularity_counter}");
+  $decay_constant = log($daily_decay_rate);
+  $epoch_decay_rate = exp($decay_constant * $elapsed_time);
 
-    $result = array();
-    foreach ($query as $record) {
+  $query = db_query("SELECT * FROM {apachesolr_popularity_counter}");
 
-      $avg_new = $elapsed_time / ($elapsed_time + $record->daystracked);
-      $avg_old = $record->daystracked / ($elapsed_time + $record->daystracked);
-      $popularity = ($avg_new * $record->recentcount) + ($epoch_decay_rate * $avg_old * $record->popularity);
+  foreach ($query as $record) {
 
-      db_update('projects')
-        ->fields(array(
-                'popularity' => $popularity,
-                'recentcount' => 0,
-                'daystracked' => $record->daystracked + $elapsed_time,
-                )
-        )
-        ->condition('nid', $record->nid)
-        ->execute();
-    }
+    $avg_new = $elapsed_time / ($elapsed_time + $record->daystracked);
+    $avg_old = $record->daystracked / ($elapsed_time + $record->daystracked);
+    $popularity = ($avg_new * $record->recentcount) + ($epoch_decay_rate * $avg_old * $record->popularity);
 
-    /*
-    db_update('apachesolr_popularity_counter')
-      ->expression('daystracked', 'daystracked + :amount', array(':amount' => $elapsed_time))
+    db_update('projects')
+      ->fields(array(
+              'popularity' => $popularity,
+              'recentcount' => 0,
+              'daystracked' => $record->daystracked + $elapsed_time,
+              )
+      )
+      ->condition('nid', $record->nid)
       ->execute();
-    */
   }
+
+  /*
+  db_update('apachesolr_popularity_counter')
+    ->expression('daystracked', 'daystracked + :amount', array(':amount' => $elapsed_time))
+    ->execute();
+  */
+//}
   
-  //variable_set('apachesolr_popularity_day_timestamp', REQUEST_TIME);
- 
+  variable_set('apachesolr_popularity_day_timestamp', REQUEST_TIME);
+  
 }
 
