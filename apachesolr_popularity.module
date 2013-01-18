@@ -24,10 +24,8 @@ function apachesolr_popularity_exit() {
         ->key(array('nid' => arg(1)))
         ->fields(array(
           'recentcount' => 1,
-          'popularity' => 1,
         ))
         ->expression('recentcount', 'recentcount + 1')
-        ->expression('popularity', 'popularity + 1')
         ->execute();
     }
   }
