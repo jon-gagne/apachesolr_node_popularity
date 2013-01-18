@@ -17,13 +17,15 @@
 function apachesolr_popularity_top_pages() {
   
   $header = array(
+    array('data' => t('Node'), 'field' => 'nid'),
     array('data' => t('Popularity'), 'field' => 'popularity', 'sort' => 'desc'),
-    array('data' => t('Page'), 'field' => 'nid'),
+    array('data' => t('Recent Count'), 'field' => 'recentcount'),
+    array('data' => t('Days Tracked'), 'field' => 'daystracked'),
   );
 
   $query = db_select('apachesolr_popularity_counter', 'p', array('target' => 'slave'))->extend('PagerDefault')->extend('TableSort');;
   //$query->addExpression('COUNT(path)', 'hits');
-  $query->fields('p', array('popularity', 'nid'));
+  $query->fields('p', array('nid', 'popularity', 'recentcount', 'daystracked'));
   $query
     ->groupBy('nid')
     ->limit(30)
@@ -31,7 +33,7 @@ function apachesolr_popularity_top_pages() {
   $result = $query->execute();
   $rows = array();
   foreach ($result as $page) {
-    $rows[] = array($page->popularity, $page->nid);
+    $rows[] = array($page->nid, $page->popularity, $page->recentcount, $page->daystracked);
   }
   //TODO: Change nid to a link to the path
   
