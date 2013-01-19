@@ -88,7 +88,7 @@ function apachesolr_popularity_cron() {
     $avg_old = $record->daystracked / ($elapsed_time + $record->daystracked);
     $popularity = ($avg_new * $record->recentcount) + ($epoch_decay_rate * $avg_old * $record->popularity);
 
-    db_update('projects')
+    db_update('apachesolr_popularity_counter')
       ->fields(array(
               'popularity' => $popularity,
               'recentcount' => 0,
