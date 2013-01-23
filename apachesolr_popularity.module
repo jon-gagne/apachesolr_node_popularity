@@ -60,6 +60,8 @@ function apachesolr_popularity_menu() {
 
 /**
  * Implements hook_cron().
+ * 
+ * Updates node popularity.
  */
 function apachesolr_popularity_cron() {
   

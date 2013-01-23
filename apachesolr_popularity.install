@@ -7,6 +7,8 @@
 
 /**
  * Implements hook_uninstall().
+ * 
+ * Cleans up permanent variables
  */
 function statistics_uninstall() {
   // Remove variables.
@@ -16,6 +18,8 @@ function statistics_uninstall() {
 
 /**
  * Implements hook_install().
+ * 
+ * Initializes permanent variables.
  */
 function apachesolr_popularity_install() {
   variable_set('apachesolr_popularity_day_timestamp', REQUEST_TIME);
@@ -24,6 +28,8 @@ function apachesolr_popularity_install() {
 
 /**
  * Implements hook_enable().
+ * 
+ * Initializes popularity tracking tables.
  */
 function apachesolr_popularity_enable() {
   
