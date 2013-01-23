@@ -37,7 +37,7 @@ function apachesolr_popularity_enable() {
  
   $query = db_insert('apachesolr_popularity_counter')->fields(array('nid'));
   foreach ($node_create_list as $node) {
-    $query->values($node);
+    $query->values(array('nid' => $node->nid));
   }
   $query->execute();
   
