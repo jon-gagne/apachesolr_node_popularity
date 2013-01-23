@@ -48,6 +48,7 @@ function apachesolr_popularity_top_pages() {
   return $build;
 }
 
+
 /**
  * Form constructor for the Apache Solr Popularity administration form.
  */
@@ -57,13 +58,35 @@ function apachesolr_popularity_settings_form() {
     '#type' => 'fieldset',
     '#title' => t('Apache Solr Popularity Settings'),
   );
+  /*
+  $form['settings']['reset_tracking'] = array(
+    '#type' => 'submit',
+    '#value' => t('Reset Popularity Scores'),
+    '#description' => t('Resets popularity tracking for all nodes.'),
+  );
+   */
   $form['settings']['popularity_tracker'] = array(
     '#type' => 'checkbox',
     '#title' => t('Track node popularity'),
     '#default_value' => variable_get('popularity_tracker', 0),
     '#description' => t('Track node viewing and calculate a popularity metric based on view frequency.'),
+  ); 
+  $form['settings']['reset_tracker'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Reset popularity values'),
+    '#default_value' => FALSE, //variable_get('reset_tracker', FALSE),
+    '#description' => t('Resets popularity tracking for all nodes.'),
   );
-
+  $form['settings']['confirm_reset'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Confirm reset? (Cannot be undone)'),
+    '#default_value' => FALSE,
+    '#states' => array(
+      'visible' => array(
+        ':input[name="reset_tracker"]' => array('checked' => TRUE)
+       ),
+    ),
+  );
   return system_settings_form($form);
 }
 
