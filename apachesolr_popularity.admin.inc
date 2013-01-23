@@ -77,11 +77,23 @@ function apachesolr_popularity_settings_form() {
     '#default_value' => FALSE, //variable_get('reset_tracker', FALSE),
     '#description' => t('Resets popularity tracking for all nodes.'),
   );
-  $form['settings']['confirm_reset'] = array(
+  $form['settings']['confirm_reset_fieldset'] = array(
+    '#type' => 'fieldset',
+    //'#title' => t('Confirm reset? (Cannot be undone)'),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="reset_tracker"]' => array('checked' => TRUE)
+       ),
+    ),
+  );
+  $form['settings']['confirm_reset_fieldset']['confirm_reset'] = array(
     '#type' => 'checkbox',
     '#title' => t('Confirm reset? (Cannot be undone)'),
     '#default_value' => FALSE,
     '#states' => array(
+      'unchecked' => array(
+        ':input[name="reset_tracker"]' => array('checked' => TRUE)
+       ),
       'visible' => array(
         ':input[name="reset_tracker"]' => array('checked' => TRUE)
        ),
