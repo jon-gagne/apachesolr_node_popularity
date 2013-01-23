@@ -58,13 +58,6 @@ function apachesolr_popularity_settings_form() {
     '#type' => 'fieldset',
     '#title' => t('Apache Solr Popularity Settings'),
   );
-  /*
-  $form['settings']['reset_tracking'] = array(
-    '#type' => 'submit',
-    '#value' => t('Reset Popularity Scores'),
-    '#description' => t('Resets popularity tracking for all nodes.'),
-  );
-   */
   $form['settings']['popularity_tracker'] = array(
     '#type' => 'checkbox',
     '#title' => t('Track node popularity'),
@@ -102,3 +95,12 @@ function apachesolr_popularity_settings_form() {
   return system_settings_form($form);
 }
 
+/**
+ * Validate the form
+ */
+function apachesolr_popularity_settings_form_validate($form, &$form_state) {
+  if ( $form_state['values']['reset_tracker']==1 AND 
+       $form_state['values']['confirm_reset']==0) {
+    form_set_error('confirm_reset', t('Please confirm reset!'));
+  }
+}
