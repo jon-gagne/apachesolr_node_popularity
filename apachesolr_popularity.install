@@ -29,10 +29,10 @@ function apachesolr_popularity_enable() {
   
   $node_create_list = db_query(
           'SELECT nid
-           FROM {node}
-           LEFT OUTER JOIN {apachesolr_popularity_counter}
-           ON ({node}.nid = {apachesolr_popularity_counter}.nid)
-           WHERE {apachesolr_popularity_counter}.nid IS NULL'
+           FROM {node} AS n
+           LEFT OUTER JOIN {apachesolr_popularity_counter} AS apc
+           ON n.nid = apc.nid
+           WHERE apc.nid IS NULL'
           );
  
   $query = db_insert('apachesolr_popularity_counter')->fields(array('nid'));
