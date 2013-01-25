@@ -108,10 +108,28 @@ function apachesolr_popularity_settings_form_validate($form, &$form_state) {
 }
 
 /**
- * Process form - hook_form_submit **** verify that this hook
+ * Process form - hook_form_submit
  */
 function apachesolr_popularity_settings_form_submit($form, &$form_state) {
   
+  // Sets up popularity tracking table
+  if ( $form_state['values']['popularity_tracker']==1) {
+    $node_create_list = db_query(
+            'SELECT n.nid
+             FROM {node} AS n
+             LEFT JOIN {apachesolr_popularity_counter} AS apc
+             ON n.nid=apc.nid
+             WHERE apc.nid IS NULL'
+            );
+
+    $query = db_insert('apachesolr_popularity_counter')->fields(array('nid'));
+    foreach ($node_create_list as $node) {
+      $query->values(array('nid' => $node->nid));
+    }
+    $query->execute();
+  }
+  
+  // Resets popularity tracking
   if ( $form_state['values']['reset_tracker']==1 AND 
        $form_state['values']['confirm_reset']==1) {
     
