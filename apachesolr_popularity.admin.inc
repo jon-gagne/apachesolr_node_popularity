@@ -96,7 +96,7 @@ function apachesolr_popularity_settings_form() {
 }
 
 /**
- * Validate the form
+ * Validate setting form - hook_form_validate
  */
 function apachesolr_popularity_settings_form_validate($form, &$form_state) {
   if ( $form_state['values']['reset_tracker']==1 AND 
@@ -104,3 +104,35 @@ function apachesolr_popularity_settings_form_validate($form, &$form_state) {
     form_set_error('confirm_reset', t('Please confirm reset!'));
   }
 }
+
+/**
+ * Process form - hook_form_submit **** verify that this hook
+ */
+function apachesolr_popularity_settings_form_submit($form, &$form_state) {
+  
+  if ( $form_state['values']['reset_tracker']==1 AND 
+       $form_state['values']['confirm_reset']==1) {
+    
+    db_update('apachesolr_popularity_counter')
+        ->fields(array(
+                'popularity' => 0.0,
+                'recentcount' => 0,
+                'daystracked' => 0.0,
+                )
+        )
+        ->execute();
+   }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
