@@ -92,6 +92,8 @@ function apachesolr_popularity_settings_form() {
        ),
     ),
   );
+  $form['#submit'][] = 'apachesolr_popularity_settings_form_submit';
+  
   return system_settings_form($form);
 }
 
