@@ -112,3 +112,24 @@ function apachesolr_popularity_cron() {
   
 }
 
+
+/**
+ * Formats an item for display from nid
+ *
+ * @return
+ *   An HTML string with $title linked to the $path.
+ */
+function _apachesolr_popularity_format_item($nid) {
+  
+  $path = "node/".$nid;
+  
+  $title = db_query('SELECT title FROM {node} WHERE nid = :nid', array(':nid' => $nid))->fetchfield(0);
+
+  //$output  = ($title ? "$title<br />" : '');
+  //$title .= drupal_get_path_alias($path);
+  $title = truncate_utf8($title, 35);
+  $output = l($title, $path);
+  return $output;
+}
+
+

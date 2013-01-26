@@ -17,9 +17,10 @@
 function apachesolr_popularity_top_pages() {
   
   $header = array(
-    array('data' => t('Node'), 'field' => 'nid'),
+    array('data' => t('Title'), 'field' => 'nid'),
+    //array('data' => t('Node ID'), 'field' => 'nid'),
     array('data' => t('Popularity'), 'field' => 'popularity', 'sort' => 'desc'),
-    array('data' => t('Recent Count'), 'field' => 'recentcount'),
+    array('data' => t('Recent Count'), 'field' => 'recentcount', 'sort' => 'desc'),
     array('data' => t('Days Tracked'), 'field' => 'daystracked'),
   );
 
@@ -28,12 +29,14 @@ function apachesolr_popularity_top_pages() {
   $query->fields('p', array('nid', 'popularity', 'recentcount', 'daystracked'));
   $query
     ->groupBy('nid')
-    ->limit(30)
-    ->orderByHeader($header);
+    ->limit(30)    
+    ->orderBy('popularity', 'desc')
+    ->orderBy('recentcount', 'desc');
+  //->orderByHeader($header)
   $result = $query->execute();
   $rows = array();
   foreach ($result as $page) {
-    $rows[] = array($page->nid, $page->popularity, $page->recentcount, $page->daystracked);
+    $rows[] = array(_apachesolr_popularity_format_item($page->nid), /*$page->nid,*/ $page->popularity, $page->recentcount, $page->daystracked);
   }
   //TODO: Change nid to a link to the path
   
@@ -96,6 +99,7 @@ function apachesolr_popularity_settings_form() {
   
   return system_settings_form($form);
 }
+
 
 /**
  * Validate setting form - hook_form_validate
