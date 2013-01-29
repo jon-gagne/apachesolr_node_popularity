@@ -29,10 +29,11 @@ function apachesolr_popularity_top_pages() {
   $query->fields('p', array('nid', 'popularity', 'recentcount', 'daystracked'));
   $query
     ->groupBy('nid')
-    ->limit(30)    
+    ->limit(30)
+    ->orderByHeader($header)
     ->orderBy('popularity', 'desc')
     ->orderBy('recentcount', 'desc');
-  //->orderByHeader($header)
+  
   $result = $query->execute();
   $rows = array();
   foreach ($result as $page) {

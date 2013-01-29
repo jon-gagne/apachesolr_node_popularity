@@ -133,3 +133,12 @@ function _apachesolr_popularity_format_item($nid) {
 }
 
 
+/**
+ * Implements hook_node_delete().
+ */
+function apachesolr_popularity_node_delete($node) {
+  // clean up popularity table when node is deleted
+  db_delete('apachesolr_popularity_counter')
+    ->condition('nid', $node->nid)
+    ->execute();
+}
