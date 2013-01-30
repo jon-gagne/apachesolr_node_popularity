@@ -66,6 +66,10 @@ function apachesolr_popularity_menu() {
 function apachesolr_popularity_cron() {
   
   $apachesolr_popularity_timestamp = variable_get('apachesolr_popularity_day_timestamp', '');
+  variable_set('apachesolr_popularity_day_timestamp', REQUEST_TIME);
+  
+  // holds the popularity values in a string for solr
+  $popularity_for_solr = '';
  
   // TODO: get current time stamp to determine $elapsed time
   $elapsed_time = 0.2;
@@ -99,6 +103,8 @@ function apachesolr_popularity_cron() {
       )
       ->condition('nid', $record->nid)
       ->execute();
+    
+    $popularity_for_solr .= $record->nid . "=" . $popularity . "\n";
   }
 
   /*
@@ -108,8 +114,24 @@ function apachesolr_popularity_cron() {
   */
 //}
   
-  variable_set('apachesolr_popularity_day_timestamp', REQUEST_TIME);
+  _apachesolr_popularity_create_external_file($popularity_for_solr);
   
+}
+
+
+/**
+ * 
+ */
+function _apachesolr_popularity_create_external_file(&$data) {
+  
+  // TODO: create interface to set $solr_data_dir
+  $solr_data_dir = $_SERVER['DOCUMENT_ROOT'] . base_path();  // get variable instead
+  $filename = 'external_popularity.txt';
+  $destination = file_build_uri($filename);
+
+  file_save_data($data, $destination, $replace=1);
+
+  copy($_SERVER['DOCUMENT_ROOT'] . base_path() . "sites/default/files/" . $filename, $solr_data_dir . $filename);
 }
 
 
