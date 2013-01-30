@@ -10,7 +10,7 @@
  * 
  * Cleans up permanent variables
  */
-function statistics_uninstall() {
+function apachesolr_popularity_uninstall() {
   // Remove variables.
   variable_del('popularity_tracker');
   variable_set('apachesolr_popularity_day_timestamp');
