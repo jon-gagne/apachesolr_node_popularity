@@ -86,17 +86,23 @@ function apachesolr_popularity_cron() {
     // TODO: get this variable from a configurable form in Apache Solr Node Popularity config 
   $daily_decay_rate = 0.95;
 
+  // calculate the exponential decay constant
   $decay_constant = log($daily_decay_rate);
+  
+  // calculate the decay rate for the time since last cron
   $epoch_decay_rate = exp($decay_constant * $elapsed_time);
 
   $query = db_query("SELECT * FROM {apachesolr_popularity_counter}");
 
   foreach ($query as $record) {
 
+    /* iterative averaging removed
     $avg_new = $elapsed_time / ($elapsed_time + $record->daystracked);
     $avg_old = $record->daystracked / ($elapsed_time + $record->daystracked);
     $popularity = ($avg_new * $record->recentcount) + ($epoch_decay_rate * $avg_old * $record->popularity);
-
+    */
+    $popularity = $record->recentcount + ($epoch_decay_rate * $record->popularity);
+    
     db_update('apachesolr_popularity_counter')
       ->fields(array(
               'popularity' => $popularity,
