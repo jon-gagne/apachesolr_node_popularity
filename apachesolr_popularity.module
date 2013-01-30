@@ -68,9 +68,12 @@ function apachesolr_popularity_cron() {
   $apachesolr_popularity_timestamp = variable_get('apachesolr_popularity_day_timestamp', '');
   variable_set('apachesolr_popularity_day_timestamp', REQUEST_TIME);
   
-  // holds the popularity values in a string for solr
-  $popularity_for_solr = '';
- 
+  // holds the popularity for each node
+  $popularity_data = array();
+  
+  // stores the node id
+  
+  
   // TODO: get current time stamp to determine $elapsed time
   $elapsed_time = 0.2;
     
@@ -103,24 +106,63 @@ function apachesolr_popularity_cron() {
       )
       ->condition('nid', $record->nid)
       ->execute();
-    
-    $popularity_for_solr .= $record->nid . "=" . $popularity . "\n";
+        
+    $popularity_data[$record->nid] = $popularity;
   }
 
-  /*
-  db_update('apachesolr_popularity_counter')
-    ->expression('daystracked', 'daystracked + :amount', array(':amount' => $elapsed_time))
-    ->execute();
-  */
-//}
+  // gets the maximum value
+  $pop_max = max($popularity_data);
   
-  _apachesolr_popularity_create_external_file($popularity_for_solr);
+  // popularity ranking influence coefficient
+  $pop_coefficient = 2.0;
+  // TODO: setup interface for value
+  //$pop_coefficient = variable_get('apachesolr_popularity_pop_coeff', '');
+  
+  // holds the popularity values in a string for solr
+  $popularity_string = '';
+  foreach ($popularity_data as $nid => $popularity) {
+    // TODO: test and contrast linear, root, and log normalization version
+    $popularity_string .= $nid . "=" . _normalize_pop_linear($popularity, $pop_max, $pop_coefficient) . "\n";
+  }
+  
+  // writes data to disk and sends to solr
+  _apachesolr_popularity_create_external_file($popularity_string);
   
 }
 
 
 /**
+ * Linear popularity normalization
  * 
+ *    No Compression
+ */
+function _normalize_pop_linear($popularity, $pop_max, $pop_coefficient) {
+  return 1.0 + $pop_coefficient * ($popularity / $pop_max);
+}
+
+
+/**
+ * Square root popularity normalization
+ * 
+ *    Moderate Compression
+ */
+function _normalize_pop_root($popularity, $pop_max, $pop_coefficient) {
+  return 1.0 + $pop_coefficient * sqrt($popularity / $pop_max);
+}
+
+
+/**
+ * Logrithmic popularity normalization
+ * 
+ *    High compression
+ */
+function _normalize_pop_log($popularity, $pop_max, $pop_coefficient, $smoothing_factor=2.0, $base=2.0) {
+  return 1.0 + $pop_coefficient * (log($smoothing_factor + $popularity, $base) / log($smoothing_factor + $pop_max, $base));
+}
+
+
+/**
+ * Writes popularity string data to the file system and copies it to the Solr data directory
  */
 function _apachesolr_popularity_create_external_file(&$data) {
   
