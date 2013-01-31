@@ -197,7 +197,11 @@ function _apachesolr_popularity_format_item($nid) {
 
   //$output  = ($title ? "$title<br />" : '');
   //$title .= drupal_get_path_alias($path);
-  $title = truncate_utf8($title, 35);
+  $title_length = strlen( $title );
+  if ( $title_length > 55 ) {
+    $title = truncate_utf8($title, 52);
+    $title .= "...";
+  }
   $output = l($title, $path);
   return $output;
 }
