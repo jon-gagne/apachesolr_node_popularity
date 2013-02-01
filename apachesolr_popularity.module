@@ -92,8 +92,10 @@ function apachesolr_popularity_cron() {
   // calculate the decay rate for the time since last cron
   $epoch_decay_rate = exp($decay_constant * $elapsed_time);
 
+  // gets tracking statistics
   $query = db_query("SELECT * FROM {apachesolr_popularity_counter}");
 
+  // calculates popularity
   foreach ($query as $record) {
 
     /* iterative averaging removed
@@ -101,13 +103,14 @@ function apachesolr_popularity_cron() {
     $avg_old = $record->daystracked / ($elapsed_time + $record->daystracked);
     $popularity = ($avg_new * $record->recentcount) + ($epoch_decay_rate * $avg_old * $record->popularity);
     */
-    $popularity = $record->recentcount + ($epoch_decay_rate * $record->popularity);
+    $popularity = ($record->recentcount / $elapsed_time) + ($epoch_decay_rate * $record->popularity);
+    $total_time = $record->daystracked + $elapsed_time;
     
     db_update('apachesolr_popularity_counter')
       ->fields(array(
               'popularity' => $popularity,
               'recentcount' => 0,
-              'daystracked' => $record->daystracked + $elapsed_time,
+              'daystracked' => $total_time,
               )
       )
       ->condition('nid', $record->nid)
@@ -138,6 +141,24 @@ function apachesolr_popularity_cron() {
 
 
 /**
+ * Gain function - Iterative mean
+ */
+function _calculate_gain_mean($delta_time, $total_time) {
+  return $delta_time/$total_time;
+}
+
+/**
+ * Gain function - Logistic decay
+ */
+function _calculate_gain_logistic_decay($delta_time, $total_time, $max_time) {
+  
+  $exp_delta = exp(-2.0*$delta_time/$max_time);
+  $exp_total = exp(-2.0*$total_time/$max_time);
+  return ( (1 - $exp_delta)/(1 + $exp_delta) ) * ( (1 + $exp_total)/(1 - $exp_total) ) ;
+}
+
+
+/**
  * Linear popularity normalization
  * 
  *    No Compression
@@ -145,7 +166,6 @@ function apachesolr_popularity_cron() {
 function _normalize_pop_linear($popularity, $pop_max, $pop_coefficient) {
   return 1.0 + $pop_coefficient * ($popularity / $pop_max);
 }
-
 
 /**
  * Square root popularity normalization
@@ -155,7 +175,6 @@ function _normalize_pop_linear($popularity, $pop_max, $pop_coefficient) {
 function _normalize_pop_root($popularity, $pop_max, $pop_coefficient) {
   return 1.0 + $pop_coefficient * sqrt($popularity / $pop_max);
 }
-
 
 /**
  * Logrithmic popularity normalization
