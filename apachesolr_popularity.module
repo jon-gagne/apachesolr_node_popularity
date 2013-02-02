@@ -76,6 +76,9 @@ function apachesolr_popularity_cron() {
   
   // TODO: get current time stamp to determine $elapsed time
   $elapsed_time = 0.2;
+  
+  // TODO: get max time
+  $max_time = 10;
     
   // TODO: ADD TIME CHECK
   // TODO: CREATE VARIABLE $apachesolr_popularity_timestamp
@@ -94,6 +97,9 @@ function apachesolr_popularity_cron() {
 
   // gets tracking statistics
   $query = db_query("SELECT * FROM {apachesolr_popularity_counter}");
+  
+  // get max recent count. used for normalization
+  $recentcount_max = db_query("SELECT MAX(recentcount) FROM {apachesolr_popularity_counter}");
 
   // calculates popularity
   foreach ($query as $record) {
@@ -103,8 +109,15 @@ function apachesolr_popularity_cron() {
     $avg_old = $record->daystracked / ($elapsed_time + $record->daystracked);
     $popularity = ($avg_new * $record->recentcount) + ($epoch_decay_rate * $avg_old * $record->popularity);
     */
-    $popularity = ($record->recentcount / $elapsed_time) + ($epoch_decay_rate * $record->popularity);
+    //$popularity = ($record->recentcount / $elapsed_time) + ($epoch_decay_rate * $record->popularity);
     $total_time = $record->daystracked + $elapsed_time;
+    
+    // calculate popularity
+    $popularity = ($record->popularity 
+                   + _calculate_gain_logistic_decay($elapsed_time, $total_time, $max_time) 
+                     * ( ($record->recentcount / ($elapsed_time*$recentcount_max)) - $record->popularity
+                       )
+                  );
     
     db_update('apachesolr_popularity_counter')
       ->fields(array(
