@@ -87,13 +87,13 @@ function apachesolr_popularity_cron() {
   //if ((REQUEST_TIME - $apachesolr_popularity_timestamp) >= 86400) {
   
     // TODO: get this variable from a configurable form in Apache Solr Node Popularity config 
-  $daily_decay_rate = 0.95;
+  //$daily_decay_rate = 0.95;
 
   // calculate the exponential decay constant
-  $decay_constant = log($daily_decay_rate);
+  //$decay_constant = log($daily_decay_rate);
   
   // calculate the decay rate for the time since last cron
-  $epoch_decay_rate = exp($decay_constant * $elapsed_time);
+  //$epoch_decay_rate = exp($decay_constant * $elapsed_time);
 
   // gets tracking statistics
   $query = db_query("SELECT * FROM {apachesolr_popularity_counter}");
