@@ -99,8 +99,15 @@ function apachesolr_popularity_cron() {
   $query = db_query("SELECT * FROM {apachesolr_popularity_counter}");
   
   // get max recent count. used for normalization
-  $recentcount_max = db_query("SELECT MAX(recentcount) FROM {apachesolr_popularity_counter}");
+  $recentcount_max = db_query("SELECT MAX(recentcount) FROM {apachesolr_popularity_counter}")->fetchField();
 
+  // prevents division by zero
+  if ( $elapsed_time == 0.0 ) $elapsed_time = 0.0001;
+  if ( $recentcount_max < 1.0 ) $recentcount_max = 1.0;
+  
+  // used for time scaling and recentcount normalization
+  $recentcount_normalization = 100.0 / ($elapsed_time*$recentcount_max);
+  
   // calculates popularity
   foreach ($query as $record) {
 
@@ -113,9 +120,9 @@ function apachesolr_popularity_cron() {
     $total_time = $record->daystracked + $elapsed_time;
     
     // calculate popularity
-    $popularity = ($record->popularity 
+    $popularity = ($record->popularity
                    + _calculate_gain_logistic_decay($elapsed_time, $total_time, $max_time) 
-                     * ( ($record->recentcount / ($elapsed_time*$recentcount_max)) - $record->popularity
+                     * ( ($record->recentcount * $recentcount_normalization) - $record->popularity
                        )
                   );
     
@@ -155,13 +162,22 @@ function apachesolr_popularity_cron() {
 
 /**
  * Gain function - Iterative mean
+ *
+ * Manditory parameter conditions:  $total_time > 0.0 AND $delta_time <= $total_time 
+ *  
+ * Returns value between [0, 1]
  */
 function _calculate_gain_mean($delta_time, $total_time) {
+    
   return $delta_time/$total_time;
 }
 
 /**
  * Gain function - Logistic decay
+ * 
+ * Manditory paramater conditions:  $max_time > 0.0 AND $total_time > 0.0 AND $delta_time <= $total_time 
+ * 
+ * Returns value between [0, 1]
  */
 function _calculate_gain_logistic_decay($delta_time, $total_time, $max_time) {
   
@@ -177,6 +193,10 @@ function _calculate_gain_logistic_decay($delta_time, $total_time, $max_time) {
  *    No Compression
  */
 function _normalize_pop_linear($popularity, $pop_max, $pop_coefficient) {
+  // prevents divsion of zero and reduces influence of popularity on ranking if it is very low
+  if ( $pop_max < 1.0 )  $pop_max = 1.0;
+  
+  // calculates popularity ranking factor
   return 1.0 + $pop_coefficient * ($popularity / $pop_max);
 }
 
@@ -186,6 +206,10 @@ function _normalize_pop_linear($popularity, $pop_max, $pop_coefficient) {
  *    Moderate Compression
  */
 function _normalize_pop_root($popularity, $pop_max, $pop_coefficient) {
+  // prevents divsion of zero and reduces influence of popularity on ranking if it is very low
+  if ( $pop_max < 1.0 )  $pop_max = 1.0;
+  
+  // calculates popularity ranking factor
   return 1.0 + $pop_coefficient * sqrt($popularity / $pop_max);
 }
 
@@ -195,6 +219,10 @@ function _normalize_pop_root($popularity, $pop_max, $pop_coefficient) {
  *    High compression
  */
 function _normalize_pop_log($popularity, $pop_max, $pop_coefficient, $smoothing_factor=2.0, $base=2.0) {
+  // prevents divsion of zero and reduces influence of popularity on ranking if it is very low
+  if ( $pop_max < 1.0 )  $pop_max = 1.0;
+  
+  // calculates popularity ranking factor
   return 1.0 + $pop_coefficient * (log($smoothing_factor + $popularity, $base) / log($smoothing_factor + $pop_max, $base));
 }
 
