@@ -3,6 +3,9 @@
 /**
  * @file
  * Admin page callbacks for the Apache Solr Popularity module.
+ * 
+ * @author Jonathan Gagne (jongagne)
+ *   @see drupal.org/user/2409764
  */
 
 /**

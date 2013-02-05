@@ -3,6 +3,9 @@
 /**
  * @file
  * Tracks node popularity and extends Solr ranking for each node with its popularity.
+ * 
+ * @author Jonathan Gagne (jongagne)
+ *   @see drupal.org/user/2409764
  */
 
 /**
@@ -78,7 +81,7 @@ function apachesolr_popularity_cron() {
   $elapsed_time = 0.2;
   
   // TODO: get max time
-  $max_time = 10;
+  $max_time = 8;
     
   // TODO: ADD TIME CHECK
   // TODO: CREATE VARIABLE $apachesolr_popularity_timestamp
@@ -86,14 +89,6 @@ function apachesolr_popularity_cron() {
   // TODO: CORRECT THIS SO IT MAKES SENSE
   //if ((REQUEST_TIME - $apachesolr_popularity_timestamp) >= 86400) {
   
-    // TODO: get this variable from a configurable form in Apache Solr Node Popularity config 
-  //$daily_decay_rate = 0.95;
-
-  // calculate the exponential decay constant
-  //$decay_constant = log($daily_decay_rate);
-  
-  // calculate the decay rate for the time since last cron
-  //$epoch_decay_rate = exp($decay_constant * $elapsed_time);
 
   // gets tracking statistics
   $query = db_query("SELECT * FROM {apachesolr_popularity_counter}");
@@ -111,11 +106,6 @@ function apachesolr_popularity_cron() {
   // calculates popularity
   foreach ($query as $record) {
 
-    /* iterative averaging removed
-    $avg_new = $elapsed_time / ($elapsed_time + $record->daystracked);
-    $avg_old = $record->daystracked / ($elapsed_time + $record->daystracked);
-    $popularity = ($avg_new * $record->recentcount) + ($epoch_decay_rate * $avg_old * $record->popularity);
-    */
     //$popularity = ($record->recentcount / $elapsed_time) + ($epoch_decay_rate * $record->popularity);
     $total_time = $record->daystracked + $elapsed_time;
     
