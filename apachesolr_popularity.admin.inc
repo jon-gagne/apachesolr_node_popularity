@@ -71,19 +71,6 @@ function apachesolr_popularity_settings_form() {
     '#default_value' => variable_get('popularity_tracker', 0),
     '#description' => t('Track node viewing and calculate a popularity metric based on view frequency.'),
   ); 
-  $form['forgetting_window_options'] = array(
-      '#type' => 'value',
-      '#value' => array('0.1', '0.5', '2.0', '5.0', '10.0', '20.0', '100', '1000')
-  );  
-  $popularity_influence_options = array(
-      '0.01' => 0.01, 
-      '0.1' => 0.1, 
-      '0.5' => 0.5, 
-      '1' => 1, 
-      '2' => 2, 
-      '4' => 4, 
-      '10' => 10
-  );
   
   $popularity_influence = variable_get('apachesolr_popularity_influence', 1.0);
   $popularity_influence_options = array( 0.01, 0.1, 0.5, 1, 2, 4, 10 );
