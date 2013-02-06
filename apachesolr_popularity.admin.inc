@@ -63,7 +63,7 @@ function apachesolr_popularity_settings_form() {
   // Config page
   $form['settings'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Apache Solr Popularity Settings'),
+    '#title' => t('Basic Popularity Settings'),
   );
   $form['settings']['popularity_tracker'] = array(
     '#type' => 'checkbox',
@@ -153,14 +153,24 @@ function apachesolr_popularity_settings_form_submit($form, &$form_state) {
 }
 
 
-
-
-
-
-
-
-
-
-
+/**
+ * Form constructor for the Apache Solr Popularity advanced administration form.
+ */
+function apachesolr_popularity_advanced_form() {
+  // Config page
+  $form['settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Advanced Popularity Settings'),
+  );
+  $form['settings']['popularity_tracker'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Track node popularity'),
+    '#default_value' => variable_get('popularity_tracker', 0),
+    '#description' => t('Track node viewing and calculate a popularity metric based on view frequency.'),
+  ); 
+  $form['#submit'][] = 'apachesolr_popularity_advanced_form_submit';
+  
+  return system_settings_form($form);
+}
 
 

@@ -48,16 +48,31 @@ function apachesolr_popularity_menu() {
   );
   $items['admin/config/search/apachesolr/apachesolr_popularity'] = array(
     'title' => 'Node Popularity',
-    'description' => 'Configure Apache Solr Popularity Tracking.',
+    //'description' => 'Configure Apache Solr Popularity Tracking.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('apachesolr_popularity_settings_form'),
-//  'page arguments' => array('statistics_settings_form'),
     'access arguments' => array('administer search'),
-//  'access arguments' => array('access statistics'),
     'file' => 'apachesolr_popularity.admin.inc',
     'type' => MENU_LOCAL_TASK,
   );
 
+  $items['admin/config/search/apachesolr/apachesolr_popularity/basic_settings'] = array(
+    'title' => 'Basic Settings',
+    'weight' => 0,
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+  
+  $items['admin/config/search/apachesolr/apachesolr_popularity/advanced_settings'] = array(
+    'title' => 'Advanced Settings',
+    'weight' => 1,
+    //'description' => 'Advanced Settings - Apache Solr Popularity Tracking.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('apachesolr_popularity_advanced_form'),
+    'access arguments' => array('administer search'),
+    'file' => 'apachesolr_popularity.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+  
   return $items;
 }
 
@@ -101,7 +116,8 @@ function apachesolr_popularity_cron() {
   if ( $recentcount_max < 1.0 ) $recentcount_max = 1.0;
   
   // used for time scaling and recentcount normalization
-  $recentcount_normalization = 100.0 / ($elapsed_time*$recentcount_max);
+  //$recentcount_normalization = 100.0 / ($elapsed_time*$recentcount_max);
+  $recentcount_normalization = 100.0 / ($recentcount_max);
   
   // calculates popularity
   foreach ($query as $record) {
@@ -133,7 +149,7 @@ function apachesolr_popularity_cron() {
   $pop_max = max($popularity_data);
   
   // popularity ranking influence coefficient
-  $pop_coefficient = 20.0;
+  $pop_coefficient = 2.0;
   // TODO: setup interface for value
   //$pop_coefficient = variable_get('apachesolr_popularity_pop_coeff', '');
   
