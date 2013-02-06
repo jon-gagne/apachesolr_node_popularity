@@ -133,7 +133,7 @@ function apachesolr_popularity_cron() {
   $pop_max = max($popularity_data);
   
   // popularity ranking influence coefficient
-  $pop_coefficient = 2.0;
+  $pop_coefficient = 20.0;
   // TODO: setup interface for value
   //$pop_coefficient = variable_get('apachesolr_popularity_pop_coeff', '');
   
@@ -223,7 +223,9 @@ function _normalize_pop_log($popularity, $pop_max, $pop_coefficient, $smoothing_
 function _apachesolr_popularity_create_external_file(&$data) {
   
   // TODO: create interface to set $solr_data_dir
-  $solr_data_dir = $_SERVER['DOCUMENT_ROOT'] . base_path();  // get variable instead
+  //$solr_data_dir = $_SERVER['DOCUMENT_ROOT'] . base_path();  // get variable instead
+  $solr_data_dir = "/opt/tomcat/solr/data/";  // get variable instead
+  
   $filename = 'external_popularity.txt';
   $destination = file_build_uri($filename);
 
@@ -264,3 +266,23 @@ function apachesolr_popularity_node_delete($node) {
     ->condition('nid', $node->nid)
     ->execute();
 }
+
+
+/**
+ * Implements hook_apachesolr_query_alter().
+ */
+function apachesolr_popularity_apachesolr_query_alter(DrupalSolrQueryInterface $query) {
+  $query->addParam('bf', 'eff_popularity');
+}
+
+
+/**
+ * Implements hook_apachesolr_confgen_schema_alter().
+ */
+/*
+function apachesolr_popularity_apachesolr_confgen_schema_alter($qp, $solr_version) {
+  module_load_include('generator.inc', 'apachesolr_popularity');
+  apachesolr_popularity_modify_schema($qp, $solr_version);
+}
+
+*/
