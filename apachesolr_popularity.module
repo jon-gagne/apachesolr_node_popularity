@@ -141,7 +141,7 @@ function apachesolr_popularity_cron() {
   $popularity_string = '';
   foreach ($popularity_data as $nid => $popularity) {
     // TODO: test and contrast linear, root, and log normalization version
-    $popularity_string .= $nid . "=" . _normalize_pop_linear($popularity, $pop_max, $pop_coefficient) . "\n";
+    $popularity_string .= apachesolr_site_hash() . "/node/" . $nid . "=" . _normalize_pop_linear($popularity, $pop_max, $pop_coefficient) . "\n";
   }
   
   // writes data to disk and sends to solr
@@ -226,7 +226,7 @@ function _apachesolr_popularity_create_external_file(&$data) {
   //$solr_data_dir = $_SERVER['DOCUMENT_ROOT'] . base_path();  // get variable instead
   $solr_data_dir = "/opt/tomcat/solr/data/";  // get variable instead
   
-  $filename = 'external_popularity.txt';
+  $filename = 'external_eff_popularity';
   $destination = file_build_uri($filename);
 
   file_save_data($data, $destination, $replace=1);
@@ -272,7 +272,7 @@ function apachesolr_popularity_node_delete($node) {
  * Implements hook_apachesolr_query_alter().
  */
 function apachesolr_popularity_apachesolr_query_alter(DrupalSolrQueryInterface $query) {
-  $query->addParam('bf', 'eff_popularity');
+  $query->addParam('boost', 'eff_popularity');
 }
 
 
