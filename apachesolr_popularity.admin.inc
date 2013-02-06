@@ -67,7 +67,7 @@ function apachesolr_popularity_settings_form() {
   );
   $form['settings']['popularity_tracker'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Enable node popularity'),
+    '#title' => t('Enable Apache Solr Node Popularity'),
     '#default_value' => variable_get('popularity_tracker', 0),
     '#description' => t('Track node viewing and calculate a popularity metric based on view frequency.'),
   ); 
@@ -89,7 +89,7 @@ function apachesolr_popularity_settings_form() {
       '#title' => t('Popularity influence'),
       '#default_value' => variable_get('apachesolr_popularity_influence', 1.0),
       '#options' => $popularity_influence_options,
-      '#description' => t("How much the popularity influence Apache Solr's ranking values.")
+      '#description' => t("Amount that node popularity influences Apache Solr's ranking values.")
   );
   $forgetting_window_options = array( 
       0.1 => 0.1, 
@@ -106,7 +106,7 @@ function apachesolr_popularity_settings_form() {
       '#title' => t('Forgetting window'),
       '#default_value' => variable_get('apachesolr_popularity_forgetting_window', 5.0),
       '#options' => $forgetting_window_options,
-      '#description' => t('After this many days of tracking, biasing recent popularity starts to begin.  Lower values increase recent bias.')
+      '#description' => t('After this many days of tracking, biasing recent popularity begins to fade on. <br> The lower the value is, the more that newer popularity measurements are biased.')
   );
   $form['settings']['reset_tracker'] = array(
     '#type' => 'checkbox',
