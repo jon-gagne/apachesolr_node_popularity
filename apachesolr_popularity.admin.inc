@@ -76,35 +76,31 @@ function apachesolr_popularity_settings_form() {
       '#value' => array('0.1', '0.5', '2.0', '5.0', '10.0', '20.0', '100', '1000')
   );  
   $popularity_influence_options = array(
-      0.01 => 0.01, 
-      0.1 => 0.1, 
-      0.5 => 0.5, 
-      1.0 => 1.0, 
-      2.0 => 2.0, 
-      4.0 => 4.0, 
-      10.0 => 10.0
+      '0.01' => 0.01, 
+      '0.1' => 0.1, 
+      '0.5' => 0.5, 
+      '1' => 1, 
+      '2' => 2, 
+      '4' => 4, 
+      '10' => 10
   );
+  
+  $popularity_influence = variable_get('apachesolr_popularity_influence', 1.0);
+  $popularity_influence_options = array( 0.01, 0.1, 0.5, 1, 2, 4, 10 );
   $form['settings']['apachesolr_popularity_influence'] = array(
       '#type' => 'select',
       '#title' => t('Popularity influence'),
-      '#default_value' => variable_get('apachesolr_popularity_influence', 1.0),
+      '#default_value' => array_search($popularity_influence, $popularity_influence_options), //,
       '#options' => $popularity_influence_options,
       '#description' => t("Amount that node popularity influences Apache Solr's ranking values.")
   );
-  $forgetting_window_options = array( 
-      0.1 => 0.1, 
-      0.5 => 0.5, 
-      2 => 2, 
-      5 => 5, 
-      10 => 10, 
-      20 => 20, 
-      100 => 100, 
-      1000 => 1000 
-  );
+  
+  $forgetting_window = variable_get('apachesolr_popularity_forgetting_window', 5.0);
+  $forgetting_window_options = array( 0.1, 0.5, 2, 5, 10, 20, 100, 1000 );
   $form['settings']['apachesolr_popularity_forgetting_window'] = array(
       '#type' => 'select',
       '#title' => t('Forgetting window'),
-      '#default_value' => variable_get('apachesolr_popularity_forgetting_window', 5.0),
+      '#default_value' => array_search($forgetting_window, $forgetting_window_options),
       '#options' => $forgetting_window_options,
       '#description' => t('After this many days of tracking, biasing recent popularity begins to fade on. <br> The lower the value is, the more that newer popularity measurements are biased.')
   );
@@ -114,6 +110,7 @@ function apachesolr_popularity_settings_form() {
     '#default_value' => FALSE, //variable_get('reset_tracker', FALSE),
     '#description' => t('Resets popularity tracking for all nodes.'),
   );
+  
   $form['settings']['confirm_reset_fieldset'] = array(
     '#type' => 'fieldset',
     //'#title' => t('Confirm reset? (Cannot be undone)'),
