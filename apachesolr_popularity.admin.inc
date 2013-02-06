@@ -74,6 +74,22 @@ function apachesolr_popularity_settings_form() {
   $form['forgetting_window_options'] = array(
       '#type' => 'value',
       '#value' => array('0.1', '0.5', '2.0', '5.0', '10.0', '20.0', '100', '1000')
+  );  
+  $popularity_influence_options = array(
+      0.01 => 0.01, 
+      0.1 => 0.1, 
+      0.5 => 0.5, 
+      1.0 => 1.0, 
+      2.0 => 2.0, 
+      4.0 => 4.0, 
+      10.0 => 10.0
+  );
+  $form['settings']['apachesolr_popularity_influence'] = array(
+      '#type' => 'select',
+      '#title' => t('Popularity influence'),
+      '#default_value' => variable_get('apachesolr_popularity_influence', 1.0),
+      '#options' => $popularity_influence_options,
+      '#description' => t("How much the popularity influence Apache Solr's ranking values.")
   );
   $forgetting_window_options = array( 
       0.1 => 0.1, 
@@ -91,22 +107,6 @@ function apachesolr_popularity_settings_form() {
       '#default_value' => variable_get('apachesolr_popularity_forgetting_window', 5.0),
       '#options' => $forgetting_window_options,
       '#description' => t('After this many days of tracking, biasing recent popularity starts to begin.  Lower values increase recent bias.')
-  );
-  $popularity_influence_options = array(
-      0.01 => 0.01, 
-      0.1 => 0.1, 
-      0.5 => 0.5, 
-      1.0 => 1.0, 
-      2.0 => 2.0, 
-      4.0 => 4.0, 
-      10.0 => 10.0
-  );
-  $form['settings']['apachesolr_popularity_influence'] = array(
-      '#type' => 'select',
-      '#title' => t('Popularity influence'),
-      '#default_value' => variable_get('apachesolr_popularity_influence', 1.0),
-      '#options' => $popularity_influence_options,
-      '#description' => t("How much the popularity influence Apache Solr's ranking values.")
   );
   $form['settings']['reset_tracker'] = array(
     '#type' => 'checkbox',
