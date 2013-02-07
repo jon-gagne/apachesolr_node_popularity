@@ -286,7 +286,7 @@ function _apachesolr_popularity_format_item($nid) {
  */
 function apachesolr_popularity_node_insert($node) {
   // begins tracking node
-  db_delete('apachesolr_popularity_counter')
+  db_insert('apachesolr_popularity_counter')
     ->fields(array(
         'nid' => $node->nid,
         'recentcount' => 0,

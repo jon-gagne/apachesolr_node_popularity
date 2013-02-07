@@ -139,14 +139,13 @@ function apachesolr_popularity_settings_form_validate($form, &$form_state) {
   }
 }
 
+
 /**
- * Process form - hook_form_submit
+ * Track all nodes not currently being tracked
  */
-function apachesolr_popularity_settings_form_submit($form, &$form_state) {
+function _track_new_nodes() {
   
-  // Sets up popularity tracking table
-  if ( $form_state['values']['popularity_tracker']==1) {
-    $node_create_list = db_query(
+  $node_create_list = db_query(
             'SELECT n.nid
              FROM {node} AS n
              LEFT JOIN {apachesolr_popularity_counter} AS apc
@@ -154,26 +153,49 @@ function apachesolr_popularity_settings_form_submit($form, &$form_state) {
              WHERE apc.nid IS NULL'
             );
 
-    $query = db_insert('apachesolr_popularity_counter')->fields(array('nid'));
-    foreach ($node_create_list as $node) {
-      $query->values(array('nid' => $node->nid));
-    }
-    $query->execute();
+  $popularity = (float) variable_get('apachesolr_popularity_init_popularity', 20.0);
+  $query = db_insert('apachesolr_popularity_counter')->fields(array('nid'));
+  foreach ($node_create_list as $node) {
+    $query->values(array(
+          'nid' => $node->nid,
+          'popularity' => $popularity
+        ));
   }
-  
-  // Resets popularity tracking
-  if ( $form_state['values']['reset_tracker']==1 AND 
-       $form_state['values']['confirm_reset']==1) {
-    
-    db_update('apachesolr_popularity_counter')
+  $query->execute();
+}
+
+
+/**
+ * Resets node popularities
+ */
+function _reset_popularity() {
+  $popularity = (float) variable_get('apachesolr_popularity_init_popularity', 20.0);
+  db_update('apachesolr_popularity_counter')
         ->fields(array(
-                'popularity' => 0.0,
+                'popularity' => $popularity,
                 'recentcount' => 0,
                 'daystracked' => 0.0,
                 )
         )
         ->execute();
-   }
+}
+
+
+/**
+ * Process form - hook_form_submit
+ */
+function apachesolr_popularity_settings_form_submit($form, &$form_state) {
+  
+  // Sets up popularity tracking table
+  if ( $form_state['values']['popularity_tracker']==1) {
+    _track_new_nodes();
+  }
+  
+  // Resets popularity tracking
+  if ( $form_state['values']['reset_tracker']==1 AND 
+       $form_state['values']['confirm_reset']==1) {
+    _reset_popularity();
+  }
 }
 
 
