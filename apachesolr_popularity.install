@@ -24,19 +24,29 @@ function apachesolr_popularity_uninstall() {
  * 
  * Initializes permanent variables.
  */
+/*
 function apachesolr_popularity_install() {
   variable_set('apachesolr_popularity_day_timestamp', REQUEST_TIME);
   variable_set('popularity_tracker', 0);
 }
+*/
+
 
 /**
  * Implements hook_enable().
  * 
  * Initializes popularity tracking tables.
  */
-/*
+
 function apachesolr_popularity_enable() {
   
+  // tracks time
+  variable_set('apachesolr_popularity_day_timestamp', REQUEST_TIME);  
+  
+  // tracking must be enabled in settings
+  variable_set('popularity_tracker', 0);
+  
+  /*
   $node_create_list = db_query(
           'SELECT n.nid
            FROM {node} AS n
@@ -50,9 +60,9 @@ function apachesolr_popularity_enable() {
     $query->values(array('nid' => $node->nid));
   }
   $query->execute();
-  
-}
  */
+}
+
 
  
 /**

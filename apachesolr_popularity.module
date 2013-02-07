@@ -274,6 +274,23 @@ function _apachesolr_popularity_format_item($nid) {
 
 
 /**
+ * Implements hook_node_insert().
+ */
+function apachesolr_popularity_node_insert($node) {
+  // begins tracking node
+  db_delete('apachesolr_popularity_counter')
+    ->fields(array(
+        'nid' => $node->nid,
+        'recentcount' => 0,
+        'popularity' => (float) variable_get('apachesolr_popularity_init_popularity', 20.0),
+        'daystracked' => 0.0
+      )
+  )
+    ->execute();
+}
+
+
+/**
  * Implements hook_node_delete().
  */
 function apachesolr_popularity_node_delete($node) {
