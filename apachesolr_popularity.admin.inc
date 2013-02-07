@@ -203,6 +203,16 @@ function apachesolr_popularity_advanced_form() {
       '#options' => $init_popularity_options,
       '#description' => t("Sets inital popularity for newly tracked nodes.<br>Starting popularity: 0 = Lowest, 20 = Moderate, 100 = Highest.")
   );
+    
+  $compression = variable_get('apachesolr_popularity_compression', 'Sqrt');
+  $compression_options = array( 'Linear', 'Sqrt', 'Log' );
+  $form['settings']['apachesolr_popularity_compression'] = array(
+      '#type' => 'select',
+      '#title' => t('Popularity compression on high traffic nodes'),
+      '#default_value' => array_search($compression, $compression_options), //,
+      '#options' => $compression_options,
+      '#description' => t("Prevent high traffic nodes from influencing Solr's ranking too greatly.<br>Compression type: Linear = None, Sqrt = Moderate, Log = High.")
+  );
   
   $form['#submit'][] = 'apachesolr_popularity_advanced_form_submit';
   
