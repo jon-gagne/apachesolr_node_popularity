@@ -228,7 +228,22 @@ function apachesolr_popularity_advanced_form() {
       '#title' => t('Popularity compression on high traffic nodes'),
       '#default_value' => array_search($compression, $compression_options), //,
       '#options' => $compression_options,
-      '#description' => t("Prevent high traffic nodes from influencing Solr's ranking too greatly.<br>Compression type: Linear = None, Sqrt = Moderate, Log = High."),
+      '#description' => t("Prevent high traffic nodes from dominating the search results.<br>Compression type: Linear = None, Sqrt = Moderate, Log = High."),
+      '#states' => array(
+        'disabled' => array(
+          ':input[name="enable_advanced settings"]' => array('checked' => FALSE)
+        ),
+      ),
+  );
+    
+  $low_pop_influence = variable_get('apachesolr_popularity_low_pop_influence', 1);
+  $low_pop_influence_options = array( 0.0, 0.2, 0.5, 1, 2);
+  $form['settings']['apachesolr_popularity_low_pop_influence'] = array(
+      '#type' => 'select',
+      '#title' => t('Low popularity influence'),
+      '#default_value' => array_search($low_pop_influence, $low_pop_influence_options), //,
+      '#options' => $low_pop_influence_options,
+      '#description' => t("Allows unpopular pages to still still be found in a search.<br> 0 = Hard to find unpopular page, 1 = Typical, 2 = Found easier."),
       '#states' => array(
         'disabled' => array(
           ':input[name="enable_advanced settings"]' => array('checked' => FALSE)
