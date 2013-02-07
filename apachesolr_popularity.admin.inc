@@ -183,12 +183,27 @@ function apachesolr_popularity_advanced_form() {
     '#type' => 'fieldset',
     '#title' => t('Advanced Popularity Settings'),
   );
-  $form['settings']['popularity_tracker'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Track node popularity'),
-    '#default_value' => variable_get('popularity_tracker', 0),
-    '#description' => t('Track node viewing and calculate a popularity metric based on view frequency.'),
-  ); 
+  
+  $init_damping = variable_get('apachesolr_popularity_init_damping', 0.2);
+  $init_damping_options = array( 0.0, 0.05, 0.2, 0.5, 1, 2, 5 );
+  $form['settings']['apachesolr_popularity_init_damping'] = array(
+      '#type' => 'select',
+      '#title' => t('Initial dampening'),
+      '#default_value' => array_search($init_damping, $init_damping_options), //,
+      '#options' => $init_damping_options,
+      '#description' => t("Smoothes initial popularity estimates.<br> 0 = None, 0.2 = Moderate, 2 = High.")
+  );
+  
+  $init_popularity = variable_get('apachesolr_popularity_init_popularity', 20);
+  $init_popularity_options = array( 0, 10, 20, 50, 100 );
+  $form['settings']['apachesolr_popularity_init_popularity'] = array(
+      '#type' => 'select',
+      '#title' => t('Initial node popularity'),
+      '#default_value' => array_search($init_popularity, $init_popularity_options), //,
+      '#options' => $init_popularity_options,
+      '#description' => t("Sets inital popularity for newly tracked nodes.<br>Starting popularity: 0 = Lowest, 20 = Moderate, 100 = Highest.")
+  );
+  
   $form['#submit'][] = 'apachesolr_popularity_advanced_form_submit';
   
   return system_settings_form($form);
