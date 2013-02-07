@@ -37,12 +37,12 @@ function apachesolr_popularity_install() {
   
   // Setting initial values
   variable_set('popularity_tracker', 0);                   // tracking must be enabled in settings
-  variable_set('apachesolr_popularity_influence', '1');
-  variable_set('apachesolr_popularity_forgetting_window', '5.0');
+  variable_set('apachesolr_popularity_influence', '2');
+  variable_set('apachesolr_popularity_forgetting_window', '5');
   variable_set('apachesolr_popularity_enable_advanced', FALSE);
   variable_set('apachesolr_popularity_init_damping', '0.2') ;
   variable_set('apachesolr_popularity_init_popularity', '20');
-  variable_set('apachesolr_popularity_compression', 'Sqrt');
+  variable_set('apachesolr_popularity_compression', 'N');
   variable_set('apachesolr_popularity_low_pop_influence', '1');
 }
 

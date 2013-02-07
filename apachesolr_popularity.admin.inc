@@ -79,7 +79,7 @@ function apachesolr_popularity_settings_form() {
       '#type' => 'select',
       '#title' => t('Popularity influence'),
       //'#default_value' => array_search($popularity_influence, $popularity_influence_options), //,
-      '#default_value' => (string) variable_get('apachesolr_popularity_influence', '1'),
+      '#default_value' => (string) variable_get('apachesolr_popularity_influence', '2'),
       '#options' => $popularity_influence_options,
       '#description' => t("Amount that node popularity influences Apache Solr's ranking scores.<br>Ranking scores will be increase up to this amount.")
   );
@@ -90,7 +90,7 @@ function apachesolr_popularity_settings_form() {
       '#type' => 'select',
       '#title' => t('Forgetting window'),
       //'#default_value' => array_search($forgetting_window, $forgetting_window_options),
-      '#default_value' => (string) variable_get('apachesolr_popularity_forgetting_window', '5.0'),
+      '#default_value' => (string) variable_get('apachesolr_popularity_forgetting_window', '5'),
       '#options' => $forgetting_window_options,
       '#description' => t('After this many days of tracking, biasing recent popularity begins to fade on. <br> The lower the value is, the more that newer popularity measurements are biased.')
   );
@@ -227,12 +227,12 @@ function apachesolr_popularity_advanced_form() {
   );
     
   //$compression = variable_get('apachesolr_popularity_compression', 'Sqrt');
-  $compression_options = array( 'Linear' => 'Linear', 'Sqrt' => 'Sqrt', 'Log' => 'Log' );
+  $compression_options = array( 'N' => 'None', 'S' => 'Sqrt', 'L' => 'Log' );
   $form['settings']['apachesolr_popularity_compression'] = array(
       '#type' => 'select',
       '#title' => t('Popularity compression on high traffic nodes'),
       //'#default_value' => array_search($compression, $compression_options), //,
-      '#default_value' => (string) variable_get('apachesolr_popularity_compression', 'Sqrt'),
+      '#default_value' => (string) variable_get('apachesolr_popularity_compression', 'N'),
       '#options' => $compression_options,
       '#description' => t("Prevent high traffic nodes from dominating the search results.<br>Compression type: Linear = None, Sqrt = Moderate, Log = High."),
       '#states' => array(
