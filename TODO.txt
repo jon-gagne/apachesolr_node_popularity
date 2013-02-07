@@ -2,5 +2,3 @@ List of TODO Tasks:
 --------------------
 
 Note, there are also a number of additional TODOs in the code.
-
-- add popularity reset field in config

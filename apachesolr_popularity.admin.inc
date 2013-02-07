@@ -187,10 +187,10 @@ function apachesolr_popularity_advanced_form() {
     '#title' => t('Advanced Popularity Settings'),
   );
   
-  $form['settings']['enable_advanced_settings'] = array(
+  $form['settings']['apachesolr_popularity_enable_advanced'] = array(
     '#type' => 'checkbox',
     '#title' => t('Enables advanced settings'),
-    '#default_value' => variable_get('enable_advanced_settings', FALSE),
+    '#default_value' => variable_get('apachesolr_popularity_enable_advanced', FALSE),
     '#description' => t('For advanced users only'),
   );
   
@@ -205,7 +205,7 @@ function apachesolr_popularity_advanced_form() {
       '#description' => t("Smoothes initial popularity estimates.<br> 0 = None, 0.2 = Moderate, 2 = High."),
       '#states' => array(
         'disabled' => array(
-          ':input[name="enable_advanced_settings"]' => array('checked' => FALSE)
+          ':input[name="apachesolr_popularity_enable_advanced"]' => array('checked' => FALSE)
         ),
       ),
   );
@@ -221,7 +221,7 @@ function apachesolr_popularity_advanced_form() {
       '#description' => t("Sets inital popularity for newly tracked nodes.<br>Starting popularity: 0 = Lowest, 20 = Moderate, 100 = Highest."),
       '#states' => array(
         'disabled' => array(
-          ':input[name="enable_advanced_settings"]' => array('checked' => FALSE)
+          ':input[name="apachesolr_popularity_enable_advanced"]' => array('checked' => FALSE)
         ),
       ),
   );
@@ -237,7 +237,7 @@ function apachesolr_popularity_advanced_form() {
       '#description' => t("Prevent high traffic nodes from dominating the search results.<br>Compression type: Linear = None, Sqrt = Moderate, Log = High."),
       '#states' => array(
         'disabled' => array(
-          ':input[name="enable_advanced_settings"]' => array('checked' => FALSE)
+          ':input[name="apachesolr_popularity_enable_advanced"]' => array('checked' => FALSE)
         ),
       ),
   );
@@ -253,7 +253,7 @@ function apachesolr_popularity_advanced_form() {
       '#description' => t("Allows unpopular pages to still still be found in a search.<br> 0 = Hard to find unpopular page, 1 = Typical, 2 = Found easier."),
       '#states' => array(
         'disabled' => array(
-          ':input[name="enable_advanced_settings"]' => array('checked' => FALSE)
+          ':input[name="apachesolr_popularity_enable_advanced"]' => array('checked' => FALSE)
         ),
       ),
   );
