@@ -34,9 +34,9 @@ function apachesolr_popularity_install() {
   variable_set('apachesolr_popularity_forgetting_window', '5.0');
   variable_set('enable_advanced_settings', FALSE);
   variable_set('apachesolr_popularity_init_damping', '0.2') ;
-  variable_get('apachesolr_popularity_init_popularity', '20');
-  variable_get('apachesolr_popularity_compression', 'Sqrt');
-  variable_get('apachesolr_popularity_low_pop_influence', '1');
+  variable_set('apachesolr_popularity_init_popularity', '20');
+  variable_set('apachesolr_popularity_compression', 'Sqrt');
+  variable_set('apachesolr_popularity_low_pop_influence', '1');
 }
 
 
