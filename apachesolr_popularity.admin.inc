@@ -72,22 +72,24 @@ function apachesolr_popularity_settings_form() {
     '#description' => t('Track node viewing and calculate a popularity metric based on view frequency.'),
   ); 
   
-  $popularity_influence = variable_get('apachesolr_popularity_influence', 1.0);
-  $popularity_influence_options = array( 0.01, 0.1, 0.5, 1, 2, 4, 10 );
+  //$popularity_influence = variable_get('apachesolr_popularity_influence', 1.0);
+  $popularity_influence_options = array( '0.01' => '0.01', '0.1' => '0.1', '0.5' => '0.5', '1' => '1', '2' => '2', '4' => '4', '10' => '10' );
   $form['settings']['apachesolr_popularity_influence'] = array(
       '#type' => 'select',
       '#title' => t('Popularity influence'),
-      '#default_value' => array_search($popularity_influence, $popularity_influence_options), //,
+      //'#default_value' => array_search($popularity_influence, $popularity_influence_options), //,
+      '#default_value' => (string) variable_get('apachesolr_popularity_influence', '1'),
       '#options' => $popularity_influence_options,
       '#description' => t("Amount that node popularity influences Apache Solr's ranking values.")
   );
   
-  $forgetting_window = variable_get('apachesolr_popularity_forgetting_window', 5.0);
-  $forgetting_window_options = array( 0.1, 0.5, 2, 5, 10, 20, 100, 1000 );
+  //$forgetting_window = variable_get('apachesolr_popularity_forgetting_window', 5.0);
+  $forgetting_window_options = array( '0.1' => '0.1', '0.5' => '0.5', '2' => '2', '5' => '5', '10' => '10', '20' => '20', '100' => '100', '1000' => '1000' );
   $form['settings']['apachesolr_popularity_forgetting_window'] = array(
       '#type' => 'select',
       '#title' => t('Forgetting window'),
-      '#default_value' => array_search($forgetting_window, $forgetting_window_options),
+      //'#default_value' => array_search($forgetting_window, $forgetting_window_options),
+      '#default_value' => (string) variable_get('apachesolr_popularity_forgetting_window', '5.0'),
       '#options' => $forgetting_window_options,
       '#description' => t('After this many days of tracking, biasing recent popularity begins to fade on. <br> The lower the value is, the more that newer popularity measurements are biased.')
   );
