@@ -73,14 +73,15 @@ function apachesolr_popularity_settings_form() {
   ); 
   
   //$popularity_influence = variable_get('apachesolr_popularity_influence', 1.0);
-  $popularity_influence_options = array( '0.01' => '0.01', '0.1' => '0.1', '0.5' => '0.5', '1' => '1', '2' => '2', '4' => '4', '10' => '10' );
+  //$popularity_influence_options = array( '0.01' => '0.01', '0.1' => '0.1', '0.5' => '0.5', '1' => '1', '2' => '2', '4' => '4', '10' => '10' );
+  $popularity_influence_options = array( '0.01' => '1%', '0.1' => '10%', '0.5' => '50%', '1' => '100%', '2' => '200%', '4' => '400%', '10' => '1000%' );
   $form['settings']['apachesolr_popularity_influence'] = array(
       '#type' => 'select',
       '#title' => t('Popularity influence'),
       //'#default_value' => array_search($popularity_influence, $popularity_influence_options), //,
       '#default_value' => (string) variable_get('apachesolr_popularity_influence', '1'),
       '#options' => $popularity_influence_options,
-      '#description' => t("Amount that node popularity influences Apache Solr's ranking values.")
+      '#description' => t("Amount that node popularity influences Apache Solr's ranking scores.<br>Ranking scores will be increase up to this amount.")
   );
   
   //$forgetting_window = variable_get('apachesolr_popularity_forgetting_window', 5.0);
