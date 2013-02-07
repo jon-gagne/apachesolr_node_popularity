@@ -184,74 +184,78 @@ function apachesolr_popularity_advanced_form() {
     '#title' => t('Advanced Popularity Settings'),
   );
   
-  $form['settings']['enable_advanced settings'] = array(
+  $form['settings']['enable_advanced_settings'] = array(
     '#type' => 'checkbox',
     '#title' => t('Enables advanced settings'),
-    '#default_value' => variable_get('enable_advanced settings', FALSE),
+    '#default_value' => variable_get('enable_advanced_settings', FALSE),
     '#description' => t('For advanced users only'),
   );
   
-  $init_damping = variable_get('apachesolr_popularity_init_damping', 0.2);
-  $init_damping_options = array( 0.0, 0.05, 0.2, 0.5, 1, 2, 5 );
+  //$init_damping = variable_get('apachesolr_popularity_init_damping', 0.2);
+  $init_damping_options = array( '0' => '0.0', '0.05' => '0.05', '0.2' => '0.2', '0.5' => '0.5', '1' => '1', '2' => '2', '5' => '5' );
   $form['settings']['apachesolr_popularity_init_damping'] = array(
       '#type' => 'select',
       '#title' => t('Initial dampening'),
-      '#default_value' => array_search($init_damping, $init_damping_options), //,
+      //'#default_value' => array_search($init_damping, $init_damping_options), 
+      '#default_value' => (string) variable_get('apachesolr_popularity_init_damping', '0.2'),
       '#options' => $init_damping_options,
       '#description' => t("Smoothes initial popularity estimates.<br> 0 = None, 0.2 = Moderate, 2 = High."),
       '#states' => array(
         'disabled' => array(
-          ':input[name="enable_advanced settings"]' => array('checked' => FALSE)
+          ':input[name="enable_advanced_settings"]' => array('checked' => FALSE)
         ),
       ),
   );
   
-  $init_popularity = variable_get('apachesolr_popularity_init_popularity', 20);
-  $init_popularity_options = array( 0, 10, 20, 50, 100 );
+  //$init_popularity = variable_get('apachesolr_popularity_init_popularity', 20);
+  $init_popularity_options = array( '0' => '0', '10' => '10', '20' => '20', '50' => '50', '100' => '100' );
   $form['settings']['apachesolr_popularity_init_popularity'] = array(
       '#type' => 'select',
       '#title' => t('Initial node popularity'),
-      '#default_value' => array_search($init_popularity, $init_popularity_options), //,
+      //'#default_value' => array_search($init_popularity, $init_popularity_options), //,
+      '#default_value' => (string) variable_get('apachesolr_popularity_init_popularity', '20'),
       '#options' => $init_popularity_options,
       '#description' => t("Sets inital popularity for newly tracked nodes.<br>Starting popularity: 0 = Lowest, 20 = Moderate, 100 = Highest."),
       '#states' => array(
         'disabled' => array(
-          ':input[name="enable_advanced settings"]' => array('checked' => FALSE)
+          ':input[name="enable_advanced_settings"]' => array('checked' => FALSE)
         ),
       ),
   );
     
-  $compression = variable_get('apachesolr_popularity_compression', 'Sqrt');
-  $compression_options = array( 'Linear', 'Sqrt', 'Log' );
+  //$compression = variable_get('apachesolr_popularity_compression', 'Sqrt');
+  $compression_options = array( 'Linear' => 'Linear', 'Sqrt' => 'Sqrt', 'Log' => 'Log' );
   $form['settings']['apachesolr_popularity_compression'] = array(
       '#type' => 'select',
       '#title' => t('Popularity compression on high traffic nodes'),
-      '#default_value' => array_search($compression, $compression_options), //,
+      //'#default_value' => array_search($compression, $compression_options), //,
+      '#default_value' => (string) variable_get('apachesolr_popularity_compression', 'Sqrt'),
       '#options' => $compression_options,
       '#description' => t("Prevent high traffic nodes from dominating the search results.<br>Compression type: Linear = None, Sqrt = Moderate, Log = High."),
       '#states' => array(
         'disabled' => array(
-          ':input[name="enable_advanced settings"]' => array('checked' => FALSE)
+          ':input[name="enable_advanced_settings"]' => array('checked' => FALSE)
         ),
       ),
   );
     
-  $low_pop_influence = variable_get('apachesolr_popularity_low_pop_influence', 1);
-  $low_pop_influence_options = array( 0.0, 0.2, 0.5, 1, 2);
+  //$low_pop_influence = variable_get('apachesolr_popularity_low_pop_influence', 1);
+  $low_pop_influence_options = array( '0' => '0', '0.2' => '0.2', '0.5' => '0.5', '1' => '1', '2' => '2' );
   $form['settings']['apachesolr_popularity_low_pop_influence'] = array(
       '#type' => 'select',
       '#title' => t('Low popularity influence'),
-      '#default_value' => array_search($low_pop_influence, $low_pop_influence_options), //,
+      //'#default_value' => array_search($low_pop_influence, $low_pop_influence_options), //,
+      '#default_value' => (string) variable_get('apachesolr_popularity_low_pop_influence', '1'),
       '#options' => $low_pop_influence_options,
       '#description' => t("Allows unpopular pages to still still be found in a search.<br> 0 = Hard to find unpopular page, 1 = Typical, 2 = Found easier."),
       '#states' => array(
         'disabled' => array(
-          ':input[name="enable_advanced settings"]' => array('checked' => FALSE)
+          ':input[name="enable_advanced_settings"]' => array('checked' => FALSE)
         ),
       ),
   );
   
-  $form['#submit'][] = 'apachesolr_popularity_advanced_form_submit';
+  //$form['#submit'][] = 'apachesolr_popularity_advanced_form_submit';
   
   return system_settings_form($form);
 }
