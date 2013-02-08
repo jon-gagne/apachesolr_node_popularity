@@ -190,13 +190,12 @@ function _reset_popularity() {
 function apachesolr_popularity_settings_form_submit($form, &$form_state) {
   
   // Sets up popularity tracking table
-  if ( $form_state['values']['popularity_tracker']==1) {
+  if ( $form_state['values']['popularity_tracker']==1 AND variable_get('popularity_tracker', 0)) {
     _track_new_nodes();
   }
   
   // Resets popularity tracking
-  if ( $form_state['values']['reset_tracker']==1 AND 
-       $form_state['values']['confirm_reset']==1) {
+  if ( $form_state['values']['reset_tracker']==1 AND $form_state['values']['confirm_reset']==1) {
     _reset_popularity();
   }
 }
