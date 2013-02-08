@@ -233,7 +233,9 @@ function _apachesolr_popularity_send_to_solr() {
   _apachesolr_popularity_send_data_to_solr(_apachesolr_popularity_db_popularity_to_string()); 
   
   // reloads Solr cache
-  $xml = file_get_contents("http://localhost:8080/solr/reloadCache");
+  $default_env_id = variable_get('apachesolr_default_environment', 'solr');
+  $defualt_env_url = db_query('SELECT url FROM {apachesolr_environment} WHERE env_id = :env_id', array(':env_id' => $default_env_id))->fetchField();
+  $xml = file_get_contents($default_env_url . '/reloadCache');
   
   /* OPTIONAL: check $xml to see if the status was good
    * 
