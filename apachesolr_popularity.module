@@ -225,11 +225,25 @@ function _normalize_pop_log($popularity, $pop_max, $smoothing_factor=2.0, $base=
 
 
 /**
- * Writes gets popularity from db and writes it to disk
+ * Updates Solr's popularity values
  */
 function _apachesolr_popularity_send_to_solr() {
   
-   _apachesolr_popularity_send_data_to_solr(_apachesolr_popularity_db_popularity_to_string());  
+  // writes popularity from db to disk and copies it to Solr data dir
+  _apachesolr_popularity_send_data_to_solr(_apachesolr_popularity_db_popularity_to_string()); 
+  
+  // reloads Solr cache
+  $xml = file_get_contents("http://localhost:8080/solr/reloadCache");
+  
+  /* OPTIONAL: check $xml to see if the status was good
+   * 
+   * Result should look something like this:
+   * 
+   * <?xml version="1.0" encoding="UTF-8"?>
+   * <response>
+   * <lst name="responseHeader"><int name="status">0</int><int name="QTime">41</int></lst>
+   * </response>
+   */
 }
 
 
