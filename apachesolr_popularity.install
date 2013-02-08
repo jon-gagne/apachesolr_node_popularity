@@ -59,7 +59,7 @@ function apachesolr_popularity_enable() {
   // tracks time
   variable_set('apachesolr_popularity_day_timestamp', REQUEST_TIME);  
   
-  // checks if tracking is enabled.  If so, then begin tracking newly added modules
+  // checks if tracking is enabled.  If so, then begin tracking nodes added since the module was disabled
   if ( variable_get('popularity_tracker', 0) ) {
     
     // TODO: Check if I can just call _track_new_nodes() from apachesolr_popularity.admin.inc
