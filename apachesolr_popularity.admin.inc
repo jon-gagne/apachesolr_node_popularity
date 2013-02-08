@@ -61,9 +61,22 @@ function apachesolr_popularity_top_pages() {
  */
 function apachesolr_popularity_settings_form() {
   // Config page
+  
+  // reloads Solr cache
+  $default_env_id = variable_get('apachesolr_default_environment', 'solr');
+  $default_solr_env = db_query('SELECT * FROM {apachesolr_environment} WHERE env_id = :env_id', array(':env_id' => $default_env_id))->fetchObject();
+  if (isset($default_solr_env->name) != '' AND isset($default_solr_env->url)) {
+    $solr_description = t("<i>Default") . " Solr " . t('server name: </i>'). $default_solr_env->name . t('<br><i>URL: </i>') . $default_solr_env->url .'<br><br>';
+  }
+  else {
+    $solr_description = t('<strong>* Error locating default Solr server.  ') . l(t('Check Apache Solr Settings'), 'admin/config/search/apachesolr/settings/') . ' *</strong><br><br>';
+  }    
+    
+  
   $form['settings'] = array(
     '#type' => 'fieldset',
     '#title' => t('Basic Popularity Settings'),
+    '#description' => $solr_description,
   );
   $form['settings']['popularity_tracker'] = array(
     '#type' => 'checkbox',
@@ -71,6 +84,15 @@ function apachesolr_popularity_settings_form() {
     '#default_value' => variable_get('popularity_tracker', 0),
     '#description' => t('Track node viewing and calculate a popularity metric based on view frequency.'),
   ); 
+          
+  $form['settings']['apachesolr_popularity_solr_data_dir'] = array(
+    '#type' => 'textfield',
+    '#title' => t("Path of the default Solr server's data directory (must be writtable)"),
+    '#default_value' => variable_get('apachesolr_popularity_solr_data_dir', ''),
+    '#description' => 'e.g. "/opt/tomcat/solr/data/"',
+    '#maxlength' => 256,
+    '#required' => TRUE
+  );
   
   //$popularity_influence = variable_get('apachesolr_popularity_influence', 1.0);
   //$popularity_influence_options = array( '0.01' => '0.01', '0.1' => '0.1', '0.5' => '0.5', '1' => '1', '2' => '2', '4' => '4', '10' => '10' );
