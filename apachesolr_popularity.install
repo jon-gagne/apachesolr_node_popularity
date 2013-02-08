@@ -59,22 +59,31 @@ function apachesolr_popularity_enable() {
   // tracks time
   variable_set('apachesolr_popularity_day_timestamp', REQUEST_TIME);  
   
-  
-  /*
-  $node_create_list = db_query(
-          'SELECT n.nid
-           FROM {node} AS n
-           LEFT JOIN {apachesolr_popularity_counter} AS apc
-           ON n.nid=apc.nid
-           WHERE apc.nid IS NULL'
-          );
- 
-  $query = db_insert('apachesolr_popularity_counter')->fields(array('nid'));
-  foreach ($node_create_list as $node) {
-    $query->values(array('nid' => $node->nid));
+  // checks if tracking is enabled.  If so, then begin tracking newly added modules
+  if ( variable_get('popularity_tracker', 0) ) {
+    
+    // TODO: Check if I can just call _track_new_nodes() from apachesolr_popularity.admin.inc
+    //       If so, then call that instead of executing the stuff within the if statement
+   
+    $node_create_list = db_query(
+            'SELECT n.nid
+             FROM {node} AS n
+             LEFT JOIN {apachesolr_popularity_counter} AS apc
+             ON n.nid=apc.nid
+             WHERE apc.nid IS NULL'
+            );
+
+    $popularity = (float) variable_get('apachesolr_popularity_init_popularity', 20.0);
+    $query = db_insert('apachesolr_popularity_counter')->fields(array('nid'));
+    foreach ($node_create_list as $node) {
+      $query->values(array(
+            'nid' => $node->nid,
+            'popularity' => $popularity
+          ));
+    }
+    $query->execute();
   }
-  $query->execute();
- */
+  
 }
 
 
