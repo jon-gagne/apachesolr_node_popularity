@@ -36,7 +36,6 @@ function apachesolr_popularity_install() {
   //variable_set('popularity_tracker', 0);
   
   // Setting initial values
-  variable_set('popularity_tracker', 0);                   // tracking must be enabled in settings
   variable_set('apachesolr_popularity_influence', '2');
   variable_set('apachesolr_popularity_forgetting_window', '5');
   variable_set('apachesolr_popularity_enable_advanced', FALSE);
@@ -58,8 +57,11 @@ function apachesolr_popularity_enable() {
   
   // tracks time
   variable_set('apachesolr_popularity_day_timestamp', REQUEST_TIME);  
-  
+    
+  variable_set('popularity_tracker', 0);                   // tracking must be enabled in settings
+          
   // checks if tracking is enabled.  If so, then begin tracking nodes added since the module was disabled
+  /*
   if ( variable_get('popularity_tracker', 0) ) {
     
     // TODO: Check if I can just call _track_new_nodes() from apachesolr_popularity.admin.inc
@@ -83,6 +85,7 @@ function apachesolr_popularity_enable() {
     }
     $query->execute();
   }
+  */
   
 }
 
