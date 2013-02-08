@@ -178,7 +178,10 @@ function _reset_popularity() {
                 )
         )
         ->execute();
+    
+  _apachesolr_popularity_send_to_solr();
 }
+
 
 
 /**
