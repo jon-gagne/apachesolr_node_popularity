@@ -298,15 +298,17 @@ function _apachesolr_popularity_db_popularity_to_string() {
 function _apachesolr_popularity_send_data_to_solr($data) {
   
   // TODO: create interface to set $solr_data_dir
-  //$solr_data_dir = $_SERVER['DOCUMENT_ROOT'] . base_path();  // get variable instead
-  $solr_data_dir = "/opt/tomcat/solr/data/";  // get variable instead
+  //$solr_data_dir = "/opt/tomcat/solr/data/";  // get variable instead
+  $solr_data_dir = variable_get('apachesolr_popularity_solr_data_dir', '');
   
-  $filename = 'external_eff_popularity';
-  $destination = file_build_uri($filename);
+  if ($solr_data_dir != '') {
+    $filename = 'external_eff_popularity';
+    $destination = file_build_uri($filename);
 
-  file_save_data($data, $destination, $replace=1);
+    file_save_data($data, $destination, $replace=1);
 
-  copy($_SERVER['DOCUMENT_ROOT'] . base_path() . "sites/default/files/" . $filename, $solr_data_dir . $filename);
+    copy($_SERVER['DOCUMENT_ROOT'] . base_path() . "sites/default/files/" . $filename, $solr_data_dir . $filename);
+  }
 }
 
 
