@@ -377,26 +377,5 @@ function apachesolr_popularity_apachesolr_confgen_solrconfig_alter($qp, $solr_ve
   $qp    
     ->find(':root')->xpath("requestHandler[@name='mlt']")
     ->after("\n\n  <!-- Reload Cache Request Handler -->\n  <requestHandler name=\"/reloadCache\" class=\"org.apache.solr.search.function.FileFloatSource\$ReloadCacheRequestHandler\"/>");
+ }
 
-//->after('<p>jon</p>');
-    /*
-     * ->after('<requestHandler name="/reloadCache" class="org.apache.solr.search.function.FileFloatSource$ReloadCacheRequestHandler" />');
-     * ->find(':root')->xpath("config/requestHandler[@name='mlt']")
-     * ->find(':root maxTime')
-     * 
-     */
-  
-  
-}
-
-
-/**
- * Implements hook_apachesolr_confgen_schema_alter().
- */
-/*
-function apachesolr_popularity_apachesolr_confgen_schema_alter($qp, $solr_version) {
-  module_load_include('generator.inc', 'apachesolr_popularity');
-  apachesolr_popularity_modify_schema($qp, $solr_version);
-}
-
-*/
