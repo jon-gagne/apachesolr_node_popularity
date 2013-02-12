@@ -94,8 +94,6 @@ function apachesolr_popularity_settings_form() {
     '#required' => TRUE
   );
   
-  //$popularity_influence = variable_get('apachesolr_popularity_influence', 1.0);
-  //$popularity_influence_options = array( '0.01' => '0.01', '0.1' => '0.1', '0.5' => '0.5', '1' => '1', '2' => '2', '4' => '4', '10' => '10' );
   $popularity_influence_options = array( '0.01' => '1%', '0.1' => '10%', '0.5' => '50%', '1' => '100%', '2' => '200%', '4' => '400%', '10' => '1000%' );
   $form['settings']['apachesolr_popularity_influence'] = array(
       '#type' => 'select',
@@ -103,7 +101,13 @@ function apachesolr_popularity_settings_form() {
       //'#default_value' => array_search($popularity_influence, $popularity_influence_options), //,
       '#default_value' => (string) variable_get('apachesolr_popularity_influence', '2'),
       '#options' => $popularity_influence_options,
-      '#description' => t("Amount that node popularity influences Apache Solr's ranking scores.<br>Ranking scores will be increase up to this amount.")
+      '#description' => t("Amount that node popularity influences Apache Solr's ranking scores.<br>Ranking scores will be increase up to this amount."),
+      '#states' => array(
+        'enabled' => array(
+          ':input[name="popularity_tracker"]' => array('checked' => TRUE),
+          ':input[name="apachesolr_popularity_solr_data_dir"]' => array('empty' => FALSE)
+        ),
+      ),
   );
   
   //$forgetting_window = variable_get('apachesolr_popularity_forgetting_window', 5.0);
@@ -114,8 +118,15 @@ function apachesolr_popularity_settings_form() {
       //'#default_value' => array_search($forgetting_window, $forgetting_window_options),
       '#default_value' => (string) variable_get('apachesolr_popularity_forgetting_window', '5'),
       '#options' => $forgetting_window_options,
-      '#description' => t('After this many days of tracking, biasing recent popularity begins to fade on. <br> The lower the value is, the more that newer popularity measurements are biased.')
+      '#description' => t('After this many days of tracking, biasing recent popularity begins to fade on. <br> The lower the value is, the more that newer popularity measurements are biased.'),
+      '#states' => array(
+        'enabled' => array(
+          ':input[name="popularity_tracker"]' => array('checked' => TRUE),
+          ':input[name="apachesolr_popularity_solr_data_dir"]' => array('empty' => FALSE)
+        ),
+      ),
   );
+  
   $form['settings']['reset_tracker'] = array(
     '#type' => 'checkbox',
     '#title' => t('Reset popularity values'),
@@ -162,13 +173,15 @@ function apachesolr_popularity_settings_form_validate($form, &$form_state) {
   }
   
   $dir = $form_state['values']['apachesolr_popularity_solr_data_dir'];
-  if ( !file_exists($dir) ) form_set_error('apachesolr_popularity_solr_data_dir', t('Directory does not exist'));
-  
-  if ( !is_writable($dir) ) form_set_error('apachesolr_popularity_solr_data_dir', t('Directory does is not writable'));
-  
-  // Adds slash if not present
-  if ( $dir[strlen($dir)-1] != '\\' AND $dir[strlen($dir)-1] != '/' )
-    $form_state['values']['apachesolr_popularity_solr_data_dir'] .= DIRECTORY_SEPARATOR; 
+  if ( $dir != '' ) {
+    if ( !file_exists($dir) ) form_set_error('apachesolr_popularity_solr_data_dir', t('Directory does not exist'));
+
+    if ( !is_writable($dir) ) form_set_error('apachesolr_popularity_solr_data_dir', t('Directory does is not writable'));
+
+    // Adds slash if not present
+    if ( $dir[strlen($dir)-1] != '\\' AND $dir[strlen($dir)-1] != '/' )
+      $form_state['values']['apachesolr_popularity_solr_data_dir'] .= DIRECTORY_SEPARATOR; 
+  }
 }
 
 
@@ -223,7 +236,6 @@ function apachesolr_popularity_settings_form_submit($form, &$form_state) {
   $send_to_solr = false;
   
   // Sets up popularity tracking table
-  drupal_set_message($form_state['values']['popularity_tracker'] . " < new, old> " . variable_get('popularity_tracker'));
   if ( ($form_state['values']['popularity_tracker']==1) AND (variable_get('popularity_tracker')==0) ) {
     _track_new_nodes();
     $send_to_solr = true;
@@ -268,12 +280,26 @@ function apachesolr_popularity_advanced_form() {
     '#title' => t('Advanced Popularity Settings'),
   );
   
-  $form['settings']['apachesolr_popularity_enable_advanced'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Enables advanced settings'),
-    '#default_value' => variable_get('apachesolr_popularity_enable_advanced', FALSE),
-    '#description' => t('For advanced users only'),
-  );
+  if ( variable_get('popularity_tracker')==1 ) {
+    $form['settings']['apachesolr_popularity_enable_advanced'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Enables advanced settings'),
+      '#default_value' => variable_get('apachesolr_popularity_enable_advanced', FALSE),     
+      '#description' => t('For advanced users only'),
+    );
+  }
+  else {
+    drupal_set_message(l(t('Enable node popularity first'), 'admin/config/search/apachesolr/apachesolr_popularity'), 'error');
+    $form['settings']['apachesolr_popularity_enable_advanced'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Enables advanced settings'),
+      '#default_value' => FALSE,
+      '#disabled' => TRUE,
+      '#description' => t('For advanced users only'),
+    );    
+  }
+  
+  
   
   //$init_damping = variable_get('apachesolr_popularity_init_damping', 0.2);
   $init_damping_options = array( '0' => '0.0', '0.05' => '0.05', '0.2' => '0.2', '0.5' => '0.5', '1' => '1', '2' => '2', '5' => '5' );
@@ -340,6 +366,7 @@ function apachesolr_popularity_advanced_form() {
   );
   
   $form['#submit'][] = 'apachesolr_popularity_advanced_form_submit';
+  $form['submit']['#disabled'] = TRUE;
   
   return system_settings_form($form);
 }
