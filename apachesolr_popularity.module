@@ -371,6 +371,26 @@ function apachesolr_popularity_apachesolr_query_alter(DrupalSolrQueryInterface $
 
 
 /**
+ * Implements hook_apachesolr_confgen_solrconfig_alter().
+ */
+function apachesolr_popularity_apachesolr_confgen_solrconfig_alter($qp, $solr_version) {  
+  $qp    
+    ->find(':root')->xpath("requestHandler[@name='mlt']")
+    ->after("\n\n  <!-- Reload Cache Request Handler -->\n  <requestHandler name=\"/reloadCache\" class=\"org.apache.solr.search.function.FileFloatSource\$ReloadCacheRequestHandler\"/>");
+
+//->after('<p>jon</p>');
+    /*
+     * ->after('<requestHandler name="/reloadCache" class="org.apache.solr.search.function.FileFloatSource$ReloadCacheRequestHandler" />');
+     * ->find(':root')->xpath("config/requestHandler[@name='mlt']")
+     * ->find(':root maxTime')
+     * 
+     */
+  
+  
+}
+
+
+/**
  * Implements hook_apachesolr_confgen_schema_alter().
  */
 /*
