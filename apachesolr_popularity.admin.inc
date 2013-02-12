@@ -89,7 +89,7 @@ function apachesolr_popularity_settings_form() {
     '#type' => 'textfield',
     '#title' => t("Path of the default Solr server's data directory (must be writtable)"),
     '#default_value' => variable_get('apachesolr_popularity_solr_data_dir', ''),
-    '#description' => 'e.g. "/opt/tomcat/solr/data/"',
+    '#description' => 'e.g.  /opt/tomcat/solr/data/',
     '#maxlength' => 256,
     '#required' => TRUE
   );
@@ -155,10 +155,20 @@ function apachesolr_popularity_settings_form() {
  * Validate setting form - hook_form_validate
  */
 function apachesolr_popularity_settings_form_validate($form, &$form_state) {
+  
   if ( $form_state['values']['reset_tracker']==1 AND 
        $form_state['values']['confirm_reset']==0) {
     form_set_error('confirm_reset', t('Please confirm reset!'));
   }
+  
+  $dir = $form_state['values']['apachesolr_popularity_solr_data_dir'];
+  if ( !file_exists($dir) ) form_set_error('apachesolr_popularity_solr_data_dir', t('Directory does not exist'));
+  
+  if ( !is_writable($dir) ) form_set_error('apachesolr_popularity_solr_data_dir', t('Directory does is not writable'));
+  
+  // Adds slash if not present
+  if ( $dir[strlen($dir)-1] != '\\' AND $dir[strlen($dir)-1] != '/' )
+    $form_state['values']['apachesolr_popularity_solr_data_dir'] .= DIRECTORY_SEPARATOR; 
 }
 
 
@@ -183,7 +193,7 @@ function _track_new_nodes() {
           'popularity' => $popularity
         ));
   }
-  $query->execute();
+  $query->execute();    
 }
 
 
@@ -199,9 +209,7 @@ function _reset_popularity() {
                 'daystracked' => 0.0,
                 )
         )
-        ->execute();
-    
-  _apachesolr_popularity_send_to_solr();
+        ->execute();    
 }
 
 
@@ -211,14 +219,38 @@ function _reset_popularity() {
  */
 function apachesolr_popularity_settings_form_submit($form, &$form_state) {
   
-  // Sets up popularity tracking table
-  if ( $form_state['values']['popularity_tracker']==1 AND variable_get('popularity_tracker', 0)) {
-    _track_new_nodes();
-  }
+  // whether to update solr with popularity data
+  $send_to_solr = false;
   
+  // Sets up popularity tracking table
+  drupal_set_message($form_state['values']['popularity_tracker'] . " < new, old> " . variable_get('popularity_tracker'));
+  if ( ($form_state['values']['popularity_tracker']==1) AND (variable_get('popularity_tracker')==0) ) {
+    _track_new_nodes();
+    $send_to_solr = true;
+  }
+   
+  // Checks if popularity influence has changed.  If yes, resend popularity to Solr
+  if ( $form_state['values']['apachesolr_popularity_influence'] != variable_get('apachesolr_popularity_influence') ) {
+    variable_set('apachesolr_popularity_influence', $form_state['values']['apachesolr_popularity_influence']);    
+    $send_to_solr = true;
+  }    
+  
+  // Checks if forgetting window has changed
+  if ( $form_state['values']['apachesolr_popularity_forgetting_window'] != variable_get('apachesolr_popularity_forgetting_window') ) {
+    drupal_set_message("Forgetting window changed.  This will effect future popularity values only.");
+  }
+    
   // Resets popularity tracking
   if ( $form_state['values']['reset_tracker']==1 AND $form_state['values']['confirm_reset']==1) {
     _reset_popularity();
+    $send_to_solr = true;
+  }  
+  
+    
+  // Check if popularity should be sent to solr
+  if ( $send_to_solr == true ) {    
+    drupal_set_message("Popularity data sent to Apache Solr.");
+    _apachesolr_popularity_send_to_solr();
   }
 }
 
@@ -227,6 +259,9 @@ function apachesolr_popularity_settings_form_submit($form, &$form_state) {
  * Form constructor for the Apache Solr Popularity advanced administration form.
  */
 function apachesolr_popularity_advanced_form() {
+  
+  $form_changed = false;
+  
   // Config page
   $form['settings'] = array(
     '#type' => 'fieldset',
@@ -304,9 +339,45 @@ function apachesolr_popularity_advanced_form() {
       ),
   );
   
-  //$form['#submit'][] = 'apachesolr_popularity_advanced_form_submit';
+  $form['#submit'][] = 'apachesolr_popularity_advanced_form_submit';
   
   return system_settings_form($form);
 }
 
 
+/**
+ * Process form - hook_form_submit
+ */
+function apachesolr_popularity_advanced_form_submit($form, &$form_state) {
+
+      
+  // Checks if initial damping has changed
+  if ( $form_state['values']['apachesolr_popularity_init_damping'] != variable_get('apachesolr_popularity_init_damping') ) {
+    drupal_set_message("Initial damping changed.  This will effect future popularity values only.");
+  }
+    
+  // Checks if initial popularity has changed
+  if ( $form_state['values']['apachesolr_popularity_init_popularity'] != variable_get('apachesolr_popularity_init_popularity') ) {
+    drupal_set_message("Initial node popularity changed.  This will effect future popularity values only.");
+  }
+  
+  $send_to_solr = false;
+  
+  // Checks if popularity compression has changed.  Is yes, send data to Solr
+  if ( $form_state['values']['apachesolr_popularity_compression'] != variable_get('apachesolr_popularity_compression') ) {
+    variable_set('apachesolr_popularity_compression', $form_state['values']['apachesolr_popularity_compression']);
+    $send_to_solr = true;
+  }
+  
+  // Checks if low popularity influence has changed. 
+  if ( $form_state['values']['apachesolr_popularity_low_pop_influence'] != variable_get('apachesolr_popularity_low_pop_influence') ) {
+    variable_set('apachesolr_popularity_low_pop_influence', $form_state['values']['apachesolr_popularity_low_pop_influence']);
+    $send_to_solr = true;
+  }
+  
+  // Check if popularity should be sent to solr
+  if ( $send_to_solr == true ) {    
+    drupal_set_message("Popularity data sent to Apache Solr.");
+    _apachesolr_popularity_send_to_solr();
+  }
+}
