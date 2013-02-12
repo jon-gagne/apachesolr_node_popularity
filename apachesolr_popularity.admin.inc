@@ -185,47 +185,6 @@ function apachesolr_popularity_settings_form_validate($form, &$form_state) {
 }
 
 
-/**
- * Track all nodes not currently being tracked
- */
-function _track_new_nodes() {
-  
-  $node_create_list = db_query(
-            'SELECT n.nid
-             FROM {node} AS n
-             LEFT JOIN {apachesolr_popularity_counter} AS apc
-             ON n.nid=apc.nid
-             WHERE apc.nid IS NULL'
-            );
-
-  $popularity = (float) variable_get('apachesolr_popularity_init_popularity', 20.0);
-  $query = db_insert('apachesolr_popularity_counter')->fields(array('nid'));
-  foreach ($node_create_list as $node) {
-    $query->values(array(
-          'nid' => $node->nid,
-          'popularity' => $popularity
-        ));
-  }
-  $query->execute();    
-}
-
-
-/**
- * Resets node popularities
- */
-function _reset_popularity() {
-  $popularity = (float) variable_get('apachesolr_popularity_init_popularity', 20.0);
-  db_update('apachesolr_popularity_counter')
-        ->fields(array(
-                'popularity' => $popularity,
-                'recentcount' => 0,
-                'daystracked' => 0.0,
-                )
-        )
-        ->execute();    
-}
-
-
 
 /**
  * Process form - hook_form_submit
@@ -241,6 +200,11 @@ function apachesolr_popularity_settings_form_submit($form, &$form_state) {
     $send_to_solr = true;
   }
    
+  // Checks if Solr data directory has changed.  If yes, than change it now before other data is sent to Solr
+  if ( $form_state['values']['apachesolr_popularity_solr_data_dir'] != variable_get('apachesolr_popularity_solr_data_dir') ) {
+    variable_set('apachesolr_popularity_solr_data_dir', $form_state['values']['apachesolr_popularity_solr_data_dir']);  
+  }      
+   
   // Checks if popularity influence has changed.  If yes, resend popularity to Solr
   if ( $form_state['values']['apachesolr_popularity_influence'] != variable_get('apachesolr_popularity_influence') ) {
     variable_set('apachesolr_popularity_influence', $form_state['values']['apachesolr_popularity_influence']);    
@@ -249,7 +213,7 @@ function apachesolr_popularity_settings_form_submit($form, &$form_state) {
   
   // Checks if forgetting window has changed
   if ( $form_state['values']['apachesolr_popularity_forgetting_window'] != variable_get('apachesolr_popularity_forgetting_window') ) {
-    drupal_set_message("Forgetting window changed.  This will effect future popularity values only.");
+    drupal_set_message(t("Forgetting window changed.  This will effect future popularity values only."));
   }
     
   // Resets popularity tracking
@@ -260,9 +224,15 @@ function apachesolr_popularity_settings_form_submit($form, &$form_state) {
   
     
   // Check if popularity should be sent to solr
-  if ( $send_to_solr == true ) {    
-    drupal_set_message("Popularity data sent to Apache Solr.");
-    _apachesolr_popularity_send_to_solr();
+  if ( $send_to_solr == true ) {   
+    $dir = variable_get('apachesolr_popularity_solr_data_dir');
+    if ( $dir == '' OR !file_exists($dir) OR !is_writable($dir) ) {       
+      drupal_set_message(t('Solr data directory'));
+    }
+    else {
+      drupal_set_message(t("Popularity data sent to Apache Solr."));
+      _apachesolr_popularity_send_to_solr();
+    }
   }
 }
 
@@ -297,9 +267,7 @@ function apachesolr_popularity_advanced_form() {
       '#disabled' => TRUE,
       '#description' => t('For advanced users only'),
     );    
-  }
-  
-  
+  }  
   
   //$init_damping = variable_get('apachesolr_popularity_init_damping', 0.2);
   $init_damping_options = array( '0' => '0.0', '0.05' => '0.05', '0.2' => '0.2', '0.5' => '0.5', '1' => '1', '2' => '2', '5' => '5' );
@@ -380,12 +348,12 @@ function apachesolr_popularity_advanced_form_submit($form, &$form_state) {
       
   // Checks if initial damping has changed
   if ( $form_state['values']['apachesolr_popularity_init_damping'] != variable_get('apachesolr_popularity_init_damping') ) {
-    drupal_set_message("Initial damping changed.  This will effect future popularity values only.");
+    drupal_set_message(t("Initial damping changed.  This will effect future popularity values only."));
   }
     
   // Checks if initial popularity has changed
   if ( $form_state['values']['apachesolr_popularity_init_popularity'] != variable_get('apachesolr_popularity_init_popularity') ) {
-    drupal_set_message("Initial node popularity changed.  This will effect future popularity values only.");
+    drupal_set_message(t("Initial node popularity changed.  This will effect future popularity values only."));
   }
   
   $send_to_solr = false;
@@ -403,8 +371,56 @@ function apachesolr_popularity_advanced_form_submit($form, &$form_state) {
   }
   
   // Check if popularity should be sent to solr
-  if ( $send_to_solr == true ) {    
-    drupal_set_message("Popularity data sent to Apache Solr.");
-    _apachesolr_popularity_send_to_solr();
+  if ( $send_to_solr == true ) {   
+    $dir = variable_get('apachesolr_popularity_solr_data_dir');
+    if ( $dir == '' OR !file_exists($dir) OR !is_writable($dir) ) {       
+      drupal_set_message('Solr ' . l(t('data directory'), 'admin/config/search/apachesolr/apachesolr_popularity') . t(' not properly set'), 'error');
+    }
+    else {
+      drupal_set_message(t("Popularity data sent to Apache Solr."));
+      _apachesolr_popularity_send_to_solr();
+    }
   }
 }
+
+
+/**
+ * Track all nodes not currently being tracked
+ */
+function _track_new_nodes() {
+  
+  $node_create_list = db_query(
+            'SELECT n.nid
+             FROM {node} AS n
+             LEFT JOIN {apachesolr_popularity_counter} AS apc
+             ON n.nid=apc.nid
+             WHERE apc.nid IS NULL'
+            );
+
+  $popularity = (float) variable_get('apachesolr_popularity_init_popularity', 20.0);
+  $query = db_insert('apachesolr_popularity_counter')->fields(array('nid'));
+  foreach ($node_create_list as $node) {
+    $query->values(array(
+          'nid' => $node->nid,
+          'popularity' => $popularity
+        ));
+  }
+  $query->execute();    
+}
+
+
+/**
+ * Resets node popularities
+ */
+function _reset_popularity() {
+  $popularity = (float) variable_get('apachesolr_popularity_init_popularity', 20.0);
+  db_update('apachesolr_popularity_counter')
+        ->fields(array(
+                'popularity' => $popularity,
+                'recentcount' => 0,
+                'daystracked' => 0.0,
+                )
+        )
+        ->execute();    
+}
+
