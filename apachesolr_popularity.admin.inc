@@ -73,19 +73,19 @@ function apachesolr_popularity_settings_form() {
   }    
     
   
-  $form['settings'] = array(
+  $form['solr_settings'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Basic Popularity Settings'),
+    '#title' => t('Solr Settings'),
     '#description' => $solr_description,
   );
-  $form['settings']['popularity_tracker'] = array(
+  $form['solr_settings']['popularity_tracker'] = array(
     '#type' => 'checkbox',
     '#title' => t('Enable Apache Solr Node Popularity'),
     '#default_value' => variable_get('popularity_tracker', 0),
     '#description' => t('Track node viewing and calculate a popularity metric based on view frequency.'),
   ); 
           
-  $form['settings']['apachesolr_popularity_solr_data_dir'] = array(
+  $form['solr_settings']['apachesolr_popularity_solr_data_dir'] = array(
     '#type' => 'textfield',
     '#title' => t("Path of the default Solr server's data directory (must be writtable)"),
     '#default_value' => variable_get('apachesolr_popularity_solr_data_dir', ''),
@@ -94,8 +94,12 @@ function apachesolr_popularity_settings_form() {
     '#required' => TRUE
   );
   
+  $form['basic_config'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Basic popularity configurations'),
+  );
   $popularity_influence_options = array( '0.01' => '1%', '0.1' => '10%', '0.5' => '50%', '1' => '100%', '2' => '200%', '4' => '400%', '10' => '1000%' );
-  $form['settings']['apachesolr_popularity_influence'] = array(
+  $form['basic_config']['apachesolr_popularity_influence'] = array(
       '#type' => 'select',
       '#title' => t('Popularity influence'),
       //'#default_value' => array_search($popularity_influence, $popularity_influence_options), //,
@@ -112,7 +116,7 @@ function apachesolr_popularity_settings_form() {
   
   //$forgetting_window = variable_get('apachesolr_popularity_forgetting_window', 5.0);
   $forgetting_window_options = array( '0.1' => '0.1', '0.5' => '0.5', '2' => '2', '5' => '5', '10' => '10', '20' => '20', '100' => '100', '1000' => '1000' );
-  $form['settings']['apachesolr_popularity_forgetting_window'] = array(
+  $form['basic_config']['apachesolr_popularity_forgetting_window'] = array(
       '#type' => 'select',
       '#title' => t('Forgetting window'),
       //'#default_value' => array_search($forgetting_window, $forgetting_window_options),
@@ -127,14 +131,23 @@ function apachesolr_popularity_settings_form() {
       ),
   );
   
-  $form['settings']['reset_tracker'] = array(
+  $form['reset_fieldset'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Clear popularity values'),
+  );
+  $form['reset_fieldset']['reset_tracker'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Reset popularity values'),
+    '#title' => t('Reset popularity values for all nodes.'),
     '#default_value' => FALSE, //variable_get('reset_tracker', FALSE),
-    '#description' => t('Resets popularity tracking for all nodes.'),
+    '#states' => array(
+        'enabled' => array(
+          ':input[name="popularity_tracker"]' => array('checked' => TRUE),
+          ':input[name="apachesolr_popularity_solr_data_dir"]' => array('empty' => FALSE)
+        ),
+      ),
   );
   
-  $form['settings']['confirm_reset_fieldset'] = array(
+  $form['reset_fieldset']['confirm_reset_fieldset'] = array(
     '#type' => 'fieldset',
     //'#title' => t('Confirm reset? (Cannot be undone)'),
     '#states' => array(
@@ -143,7 +156,7 @@ function apachesolr_popularity_settings_form() {
        ),
     ),
   );
-  $form['settings']['confirm_reset_fieldset']['confirm_reset'] = array(
+  $form['reset_fieldset']['confirm_reset_fieldset']['confirm_reset'] = array(
     '#type' => 'checkbox',
     '#title' => t('Confirm reset? (Cannot be undone)'),
     '#default_value' => FALSE,
