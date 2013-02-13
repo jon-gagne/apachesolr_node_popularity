@@ -18,18 +18,21 @@ function apachesolr_popularity_exit() {
   global $user;
 
   drupal_bootstrap(DRUPAL_BOOTSTRAP_VARIABLES);
-
+  
   if (variable_get('popularity_tracker', 0)) {
     // We are counting content views.
     if (arg(0) == 'node' && is_numeric(arg(1)) && arg(2) == NULL) {
-      // A node has been viewed, so update the node's counters.
-      db_merge('apachesolr_popularity_counter')
-        ->key(array('nid' => arg(1)))
-        ->fields(array(
-          'recentcount' => 1,
-        ))
-        ->expression('recentcount', 'recentcount + 1')
-        ->execute();
+      // Don't update if front page tracking is disabled AND the node is the front page
+      if (!(variable_get('apachesolr_popularity_disable_frontpage', 1) AND _apachesolr_popularity_get_front_page_nid() == arg(1))) {
+        // A node has been viewed, so update the node's counters.
+        db_merge('apachesolr_popularity_counter')
+          ->key(array('nid' => arg(1)))
+          ->fields(array(
+            'recentcount' => 1,
+          ))
+          ->expression('recentcount', 'recentcount + 1')
+          ->execute();
+      }
     }
   }
 }
@@ -82,6 +85,11 @@ function apachesolr_popularity_menu() {
  * Updates node popularity and sends to solr.
  */
 function apachesolr_popularity_cron() {
+  
+  // if front page tracking is disabled, remove front page information
+  if (variable_get('apachesolr_popularity_disable_frontpage', 1)) {
+    _apachesolr_popularity_delete_front_page_popularity();
+  }
   
   // Updates node popularity
   _apachesolr_popularity_update_popularity();
@@ -339,17 +347,62 @@ function _apachesolr_popularity_format_item($nid) {
  */
 function apachesolr_popularity_node_insert($node) {
   // begins tracking node
-  db_insert('apachesolr_popularity_counter')
-    ->fields(array(
-        'nid' => $node->nid,
-        'recentcount' => 0,
-        'popularity' => (float) variable_get('apachesolr_popularity_init_popularity', 20.0),
-        'daystracked' => 0.0
-      )
-  )
-    ->execute();
+  _apachesolr_popularity_add_node($node->nid);
 }
 
+
+/**
+ * Adds a node to the tracking table using the node's nid
+ */
+function _apachesolr_popularity_add_node($nid) {
+  // checks if already exists
+  $exits = db_select('apachesolr_popularity_counter', 'pc')
+    ->fields('pc', array('nid'))
+    ->condition('nid', $nid)
+    ->range(0, 1)
+    ->execute()
+    ->rowCount();
+  
+  // adds if doesn't exist
+  if ($exists) {
+    db_insert('apachesolr_popularity_counter')
+      ->fields(array(
+          'nid' => $nid,
+          'recentcount' => 0,
+          'popularity' => (float) variable_get('apachesolr_popularity_init_popularity', 20.0),
+          'daystracked' => 0.0
+        )
+    )
+    ->execute();  
+  }
+}
+
+
+/**
+ * Removes a node to the tracking table using the node's nid
+ */
+function _apachesolr_popularity_delete_node($nid) {
+  db_delete('apachesolr_popularity_counter')
+        ->condition('nid', $nid)
+        ->execute();
+}
+
+
+/**
+ * Gets front page nid if availalable
+ */
+function _apachesolr_popularity_get_front_page_nid() {
+  // get front page nid (if available)
+  $front_nid = NULL;
+  $front_url = variable_get('site_frontpage', 'node');
+  $front_url = drupal_get_normal_path($front_url);  // in case it was an alias
+  $front_url = trim($front_url, '/');
+  $front = explode('/', $front_url);
+  if( $front[0]=='node' && ctype_digit($front[1]) ) {
+    $front_nid = $front[1];
+  }
+  return $front_nid;
+}
 
 /**
  * Implements hook_node_delete().
@@ -379,3 +432,26 @@ function apachesolr_popularity_apachesolr_confgen_solrconfig_alter($qp, $solr_ve
     ->after("\n\n  <!-- Reload Cache Request Handler -->\n  <requestHandler name=\"/reloadCache\" class=\"org.apache.solr.search.function.FileFloatSource\$ReloadCacheRequestHandler\"/>");
  }
 
+ 
+/*
+ * Stops tracking (deletes) front page popularity
+ */
+ function _apachesolr_popularity_delete_front_page_popularity() {
+   // get front page nid
+   $front_nid = _apachesolr_popularity_get_front_page_nid();
+   // Delete front page tracking
+   if (isset($front_nid))
+     _apachesolr_popularity_delete_node($nid);
+ }
+ 
+ 
+ /*
+ * Begins tracking (adds) front page popularity
+ */
+ function _apachesolr_popularity_track_front_page_popularity() {
+   // get front page nid
+   $front_nid = _apachesolr_popularity_get_front_page_nid();
+   // start tracking the front page node
+   if (isset($front_nid))    
+     _apachesolr_popularity_add_node($nid);
+ }

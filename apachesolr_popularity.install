@@ -38,6 +38,7 @@ function apachesolr_popularity_install() {
   // Setting initial values
   variable_set('apachesolr_popularity_influence', '2');
   variable_set('apachesolr_popularity_forgetting_window', '5');
+  variable_set('apachesolr_popularity_disable_frontpage', '1');
   variable_set('apachesolr_popularity_enable_advanced', FALSE);
   variable_set('apachesolr_popularity_init_damping', '0.2') ;
   variable_set('apachesolr_popularity_init_popularity', '20');

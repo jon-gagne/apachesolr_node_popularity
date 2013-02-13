@@ -127,7 +127,7 @@ function apachesolr_popularity_settings_form() {
         ),
       ),
   );
-  $form['basic_config']['disable_frontpage_tracking'] = array(
+  $form['basic_config']['apachesolr_popularity_disable_frontpage'] = array(
     '#type' => 'checkbox',
     '#title' => t('Disable popularity tracking for the front page'),
     '#default_value' => variable_get('disable_homepage_tracking', 1),
@@ -236,6 +236,19 @@ function apachesolr_popularity_settings_form_submit($form, &$form_state) {
   // Checks if forgetting window has changed
   if ( $form_state['values']['apachesolr_popularity_forgetting_window'] != variable_get('apachesolr_popularity_forgetting_window') ) {
     drupal_set_message(t("Forgetting window changed.  This will effect future popularity values only."));
+  }
+  
+ 
+  // Checks if front page tracking has changed
+  if ( $form_state['values']['apachesolr_popularity_disable_frontpage'] != variable_get('apachesolr_popularity_disable_frontpage') ) {
+    // removes front page tracking data
+    if ( $form_state['values']['apachesolr_popularity_disable_frontpage'] == 1 ) {
+      _apachesolr_popularity_delete_front_page_popularity();
+    }
+    // adds front page tracking data
+    else if ( $form_state['values']['apachesolr_popularity_disable_frontpage'] == 0 ) {
+      _apachesolr_popularity_track_front_page_popularity();
+    }
   }
     
   // Resets popularity tracking
