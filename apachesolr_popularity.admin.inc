@@ -83,8 +83,7 @@ function apachesolr_popularity_settings_form() {
     '#title' => t('Enable Apache Solr Node Popularity'),
     '#default_value' => variable_get('popularity_tracker', 0),
     '#description' => t('Track node viewing and calculate a popularity metric based on view frequency.'),
-  ); 
-          
+  );           
   $form['solr_settings']['apachesolr_popularity_solr_data_dir'] = array(
     '#type' => 'textfield',
     '#title' => t("Path of the default Solr server's data directory (must be writtable)"),
@@ -113,8 +112,6 @@ function apachesolr_popularity_settings_form() {
         ),
       ),
   );
-  
-  //$forgetting_window = variable_get('apachesolr_popularity_forgetting_window', 5.0);
   $forgetting_window_options = array( '0.1' => '0.1', '0.5' => '0.5', '2' => '2', '5' => '5', '10' => '10', '20' => '20', '100' => '100', '1000' => '1000' );
   $form['basic_config']['apachesolr_popularity_forgetting_window'] = array(
       '#type' => 'select',
@@ -129,6 +126,12 @@ function apachesolr_popularity_settings_form() {
           ':input[name="apachesolr_popularity_solr_data_dir"]' => array('empty' => FALSE)
         ),
       ),
+  );
+  $form['basic_config']['disable_frontpage_tracking'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Disable popularity tracking for the front page'),
+    '#default_value' => variable_get('disable_homepage_tracking', 1),
+    '#description' => t('Due to the high number of views of most front pages, disabling popularity tracking of it will generally improve search result.'),
   );
   
   $form['reset_fieldset'] = array(
