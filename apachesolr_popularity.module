@@ -28,6 +28,7 @@ function apachesolr_popularity_exit() {
         db_merge('apachesolr_popularity_counter')
           ->key(array('nid' => arg(1)))
           ->fields(array(
+            'popularity' => (float) variable_get('apachesolr_popularity_init_popularity', 20.0),
             'recentcount' => 1,
           ))
           ->expression('recentcount', 'recentcount + 1')
@@ -356,7 +357,7 @@ function apachesolr_popularity_node_insert($node) {
  */
 function _apachesolr_popularity_add_node($nid) {
   // checks if already exists
-  $exits = db_select('apachesolr_popularity_counter', 'pc')
+  $exists = db_select('apachesolr_popularity_counter', 'pc')
     ->fields('pc', array('nid'))
     ->condition('nid', $nid)
     ->range(0, 1)
@@ -364,7 +365,7 @@ function _apachesolr_popularity_add_node($nid) {
     ->rowCount();
   
   // adds if doesn't exist
-  if ($exists) {
+  if (!$exists) {
     db_insert('apachesolr_popularity_counter')
       ->fields(array(
           'nid' => $nid,
@@ -441,7 +442,7 @@ function apachesolr_popularity_apachesolr_confgen_solrconfig_alter($qp, $solr_ve
    $front_nid = _apachesolr_popularity_get_front_page_nid();
    // Delete front page tracking
    if (isset($front_nid))
-     _apachesolr_popularity_delete_node($nid);
+     _apachesolr_popularity_delete_node($front_nid);
  }
  
  
@@ -453,5 +454,5 @@ function apachesolr_popularity_apachesolr_confgen_solrconfig_alter($qp, $solr_ve
    $front_nid = _apachesolr_popularity_get_front_page_nid();
    // start tracking the front page node
    if (isset($front_nid))    
-     _apachesolr_popularity_add_node($nid);
+     _apachesolr_popularity_add_node($front_nid);
  }

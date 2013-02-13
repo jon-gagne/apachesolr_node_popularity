@@ -130,7 +130,7 @@ function apachesolr_popularity_settings_form() {
   $form['basic_config']['apachesolr_popularity_disable_frontpage'] = array(
     '#type' => 'checkbox',
     '#title' => t('Disable popularity tracking for the front page'),
-    '#default_value' => variable_get('disable_homepage_tracking', 1),
+    '#default_value' => variable_get('apachesolr_popularity_disable_frontpage', 1),
     '#description' => t('Due to the high number of views of most front pages, disabling popularity tracking of it will generally improve search result.'),
     '#states' => array(
       'enabled' => array(
@@ -147,7 +147,7 @@ function apachesolr_popularity_settings_form() {
   $form['reset_fieldset']['reset_tracker'] = array(
     '#type' => 'checkbox',
     '#title' => t('Reset popularity values for all nodes.'),
-    '#default_value' => FALSE, //variable_get('reset_tracker', FALSE),
+    '#default_value' => FALSE, 
     '#states' => array(
         'enabled' => array(
           ':input[name="popularity_tracker"]' => array('checked' => TRUE),
@@ -241,6 +241,7 @@ function apachesolr_popularity_settings_form_submit($form, &$form_state) {
  
   // Checks if front page tracking has changed
   if ( $form_state['values']['apachesolr_popularity_disable_frontpage'] != variable_get('apachesolr_popularity_disable_frontpage') ) {
+    $send_to_solr = true;
     // removes front page tracking data
     if ( $form_state['values']['apachesolr_popularity_disable_frontpage'] == 1 ) {
       _apachesolr_popularity_delete_front_page_popularity();
@@ -434,13 +435,32 @@ function _track_new_nodes() {
 
   $popularity = (float) variable_get('apachesolr_popularity_init_popularity', 20.0);
   $query = db_insert('apachesolr_popularity_counter')->fields(array('nid'));
-  foreach ($node_create_list as $node) {
-    $query->values(array(
-          'nid' => $node->nid,
-          'popularity' => $popularity
-        ));
+  
+  // check whether front page tracking is disabled
+  if (variable_get('apachesolr_popularity_disable_frontpage', 1)) {
+    // get front page nid if available
+    $front_nid = _apachesolr_popularity_get_front_page_nid();
+    foreach ($node_create_list as $node) {
+      // only add nodes that aren't the front page
+      if ($front_nid != $node->nid){
+        $query->values(array(
+              'nid' => $node->nid,
+              'popularity' => $popularity
+            ));     
+        $query->execute();
+      }      
+    }
+  } 
+  // front page tracking is enabled therefore add all nodes
+  else {
+    foreach ($node_create_list as $node) {
+      $query->values(array(
+            'nid' => $node->nid,
+            'popularity' => $popularity
+          ));
+    }
+    $query->execute();  
   }
-  $query->execute();    
 }
 
 
