@@ -132,6 +132,12 @@ function apachesolr_popularity_settings_form() {
     '#title' => t('Disable popularity tracking for the front page'),
     '#default_value' => variable_get('disable_homepage_tracking', 1),
     '#description' => t('Due to the high number of views of most front pages, disabling popularity tracking of it will generally improve search result.'),
+    '#states' => array(
+      'enabled' => array(
+        ':input[name="popularity_tracker"]' => array('checked' => TRUE),
+        ':input[name="apachesolr_popularity_solr_data_dir"]' => array('empty' => FALSE)
+      ),
+    ),  
   );
   
   $form['reset_fieldset'] = array(
