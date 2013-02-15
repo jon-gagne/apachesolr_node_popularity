@@ -251,6 +251,18 @@ function apachesolr_popularity_settings_form_submit($form, &$form_state) {
     drupal_set_message(t("Forgetting window changed.  This will effect future popularity values only."));
   }
   
+  // Checks if only track published pages has changed
+  if ( $form_state['values']['apachesolr_popularity_only_published'] != variable_get('apachesolr_popularity_only_published') ) {
+    $send_to_solr = true;
+    // removes front page tracking data
+    if ( $form_state['values']['apachesolr_popularity_only_published'] == 1 ) {
+      _apachesolr_popularity_delete_unpublished();
+    }
+    // adds front page tracking data
+    else if ( $form_state['values']['apachesolr_popularity_only_published'] == 0 ) {
+      _apachesolr_popularity_track_unpublished();
+    }
+  }
  
   // Checks if front page tracking has changed
   if ( $form_state['values']['apachesolr_popularity_disable_frontpage'] != variable_get('apachesolr_popularity_disable_frontpage') ) {

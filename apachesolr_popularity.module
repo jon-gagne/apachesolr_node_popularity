@@ -15,7 +15,7 @@
  */
 function apachesolr_popularity_exit() {
   
-  global $user;
+  //global $user;
 
   drupal_bootstrap(DRUPAL_BOOTSTRAP_VARIABLES);
   
@@ -23,16 +23,21 @@ function apachesolr_popularity_exit() {
     // We are counting content views.
     if (arg(0) == 'node' && is_numeric(arg(1)) && arg(2) == NULL) {
       // Don't update if front page tracking is disabled AND the node is the front page
-      if (!(variable_get('apachesolr_popularity_disable_frontpage', 1) AND _apachesolr_popularity_get_front_page_nid() == arg(1))) {
-        // A node has been viewed, so update the node's counters.
-        db_merge('apachesolr_popularity_counter')
-          ->key(array('nid' => arg(1)))
-          ->insertFields(array(
-            'popularity' => (float) variable_get('apachesolr_popularity_init_popularity', 20.0),
-            'recentcount' => 1,
-          ))
-          ->expression('recentcount', 'recentcount + 1')
-          ->execute();
+      if (!(variable_get('apachesolr_popularity_disable_frontpage', 1) AND _apachesolr_popularity_get_front_page_nid() == arg(1))) {  
+        // Get node publish status
+        $node_status = db_query("SELECT status FROM {node} WHERE nid = :nid LIMIT 1", array(':nid' => arg(1)))->fetchField();
+        // Check if the only track published pages field is set and the node is unpublished
+        if (!(variable_get('apachesolr_popularity_only_published') AND !$node_status)) {
+          // A node has been viewed, so update the node's counters.
+          db_merge('apachesolr_popularity_counter')
+            ->key(array('nid' => arg(1)))
+            ->insertFields(array(
+              'popularity' => (float) variable_get('apachesolr_popularity_init_popularity', 20.0),
+              'recentcount' => 1,
+            ))
+            ->expression('recentcount', 'recentcount + 1')
+            ->execute();
+        }
       }
     }
   }
@@ -346,9 +351,12 @@ function _apachesolr_popularity_format_item($nid) {
 /**
  * Implements hook_node_insert().
  */
-function apachesolr_popularity_node_insert($node) {
-  // begins tracking node
-  _apachesolr_popularity_add_node($node->nid);
+function apachesolr_popularity_node_insert($node) {  
+  // Check if the only track published pages field is set and the node is unpublished
+  if (!(variable_get('apachesolr_popularity_only_published') AND !$node->status)) {
+    // begins tracking node
+    _apachesolr_popularity_add_node($node->nid);
+  }
 }
 
 
@@ -434,10 +442,10 @@ function apachesolr_popularity_apachesolr_confgen_solrconfig_alter($qp, $solr_ve
  }
 
  
-/*
- * Stops tracking (deletes) front page popularity
+ /*
+ * Stops tracking (deletes) unpublished pages
  */
- function _apachesolr_popularity_delete_front_page_popularity() {
+ function _apachesolr_popularity_delete_unpublished() {
    // get front page nid
    $front_nid = _apachesolr_popularity_get_front_page_nid();
    // Delete front page tracking
@@ -447,14 +455,29 @@ function apachesolr_popularity_apachesolr_confgen_solrconfig_alter($qp, $solr_ve
  
  
  /*
- * Begins tracking (adds) front page popularity
+ * Begins tracking (adds) unpublished pages
  */
- function _apachesolr_popularity_track_front_page_popularity() {
+ function _apachesolr_popularity_track_unpublished() {
    // get front page nid
    $front_nid = _apachesolr_popularity_get_front_page_nid();
    // start tracking the front page node
    if (isset($front_nid))    
      _apachesolr_popularity_add_node($front_nid);
+ }
+ 
+/*
+ * Stops tracking (deletes) front page popularity
+ */
+ function _apachesolr_popularity_delete_front_page_popularity() {
+   // TODO
+ }
+ 
+ 
+ /*
+ * Begins tracking (adds) front page popularity
+ */
+ function _apachesolr_popularity_track_front_page_popularity() {
+   // TODO
  }
 
  
@@ -465,7 +488,7 @@ function apachesolr_popularity_apachesolr_confgen_solrconfig_alter($qp, $solr_ve
  */
 function apachesolr_popularity_node_update($node) {
   // Check if the only track published pages field is set
-  if (variable_get(apachesolr_popularity_only_published)) {
+  if (variable_get('apachesolr_popularity_only_published')) {
     if ($node->type == 'article') {
       // Stop tracking nodes that are no longer published
       if ($node->original->status == 1 && $node->status == 0) {
