@@ -456,3 +456,34 @@ function apachesolr_popularity_apachesolr_confgen_solrconfig_alter($qp, $solr_ve
    if (isset($front_nid))    
      _apachesolr_popularity_add_node($front_nid);
  }
+
+ 
+/*
+ * Implements hook node update
+ * 
+ * Finds whether a node's published status has changed 
+ */
+function apachesolr_popularity_node_update($node) {
+  // Check if the only track published pages field is set
+  if (variable_get(apachesolr_popularity_only_published)) {
+    if ($node->type == 'article') {
+      // Stop tracking nodes that are no longer published
+      if ($node->original->status == 1 && $node->status == 0) {
+        // clean up popularity table when node is deleted
+        db_delete('apachesolr_popularity_counter')
+          ->condition('nid', $node->nid)
+          ->execute();
+      }
+      // Start tracking nodes that are no longer published
+      if ($node->original->status == 0 && $node->status == 1) {
+        // Set up the popularity counter table to begin tracking
+        db_merge('apachesolr_popularity_counter')
+          ->key(array('nid' => $node->nid))
+          ->fields(array(
+            'popularity' => (float) variable_get('apachesolr_popularity_init_popularity', 20.0)
+          ))
+          ->execute();
+      }
+    }
+  }
+}
