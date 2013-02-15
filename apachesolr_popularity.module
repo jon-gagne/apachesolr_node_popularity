@@ -27,7 +27,7 @@ function apachesolr_popularity_exit() {
         // A node has been viewed, so update the node's counters.
         db_merge('apachesolr_popularity_counter')
           ->key(array('nid' => arg(1)))
-          ->fields(array(
+          ->insertFields(array(
             'popularity' => (float) variable_get('apachesolr_popularity_init_popularity', 20.0),
             'recentcount' => 1,
           ))
