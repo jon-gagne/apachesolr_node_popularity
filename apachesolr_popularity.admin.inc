@@ -25,13 +25,22 @@ function apachesolr_popularity_top_pages() {
     array('data' => t('Popularity'), 'field' => 'popularity', 'sort' => 'desc'),
     array('data' => t('Recent Count'), 'field' => 'recentcount', 'sort' => 'desc'),
     array('data' => t('Days Tracked'), 'field' => 'daystracked'),
+    array('data' => t('Tracking flag'), 'field' => 'flag'),
   );
-
-  $query = db_select('apachesolr_popularity_counter', 'p', array('target' => 'slave'))->extend('PagerDefault')->extend('TableSort');;
+  
+  // there is probably a better way to do this.  not sure how to use bitwise operations with db_select().  can do it with db_query() if it can be converted
+  $flag_array = array(0);
+  if (!variable_get('apachesolr_popularity_only_published')) $flag_array[] = 1;
+  if (!variable_get('apachesolr_popularity_disable_frontpage')) $flag_array[] = 2;
+  if (!variable_get('apachesolr_popularity_only_published') and !variable_get('apachesolr_popularity_disable_frontpage')) $flag_array[] = 3;
+    
+  $query = db_select('apachesolr_popularity_counter', 'p', array('target' => 'slave'))->extend('PagerDefault')->extend('TableSort');
   //$query->addExpression('COUNT(path)', 'hits');
-  $query->fields('p', array('nid', 'popularity', 'recentcount', 'daystracked'));
-  $query
+  $query->fields('p', array('nid', 'popularity', 'recentcount', 'daystracked', 'flag'));
+  //$query->addExpression('flag = 0');
+  $query       
     ->groupBy('nid')
+    ->condition('flag', $flag_array, 'IN')  // if you can find a way to do this as flags it's even better
     ->limit(30)
     ->orderByHeader($header)
     ->orderBy('popularity', 'desc')
@@ -40,7 +49,7 @@ function apachesolr_popularity_top_pages() {
   $result = $query->execute();
   $rows = array();
   foreach ($result as $page) {
-    $rows[] = array(_apachesolr_popularity_format_item($page->nid), /*$page->nid,*/ $page->popularity, $page->recentcount, $page->daystracked);
+    $rows[] = array(_apachesolr_popularity_format_item($page->nid), /*$page->nid,*/ $page->popularity, $page->recentcount, $page->daystracked, $page->flag);
   }
   //TODO: Change nid to a link to the path
   

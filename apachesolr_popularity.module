@@ -8,6 +8,36 @@
  *   @see drupal.org/user/2409764
  */
 
+
+// tracking flag constants
+if (!defined('UNPUBLISHED')) {
+  define('UNPUBLISHED', 0x1);
+}
+if (!defined('FRONTPAGE')) {
+  define('FRONTPAGE', 0x2);
+}
+// unused, but an example of how to expand the flash in the future
+if (!defined('MISC_ATTRIBUTE')) {
+  define('MISC_ATTRIBUTE', 0x4);
+}
+
+
+// Other constants
+if (!defined('OFF')) {
+  define('OFF', FALSE);
+}
+if (!defined('ON')) {
+  define('ON', TRUE);
+}
+
+// sets binary flags
+function setflag(&$var, $flag, $set=ON) {
+  if ($set==ON) $var = ($var | $flag);
+  if ($set==OFF) $var = ($var & ~$flag);
+}
+
+
+
 /**
  * Implements hook_exit().
  *
@@ -93,9 +123,11 @@ function apachesolr_popularity_menu() {
 function apachesolr_popularity_cron() {
   
   // if front page tracking is disabled, remove front page information
+  /*
   if (variable_get('apachesolr_popularity_disable_frontpage', 1)) {
     _apachesolr_popularity_delete_front_page_popularity();
   }
+   */
   
   // Updates node popularity
   _apachesolr_popularity_update_popularity();
@@ -114,7 +146,7 @@ function _apachesolr_popularity_update_popularity() {
   variable_set('apachesolr_popularity_day_timestamp', REQUEST_TIME);
   
   $forgetting_window = (float) variable_get('apachesolr_popularity_forgetting_window', 5.0);
-  $init_damping = (float) variable_get('apachesolr_popularity_init_damping', 0.2) ;
+  $init_damping = (float) variable_get('apachesolr_popularity_init_damping', 0.2);
     
   // holds the popularity for each node
   $popularity_data = array();
@@ -131,12 +163,13 @@ function _apachesolr_popularity_update_popularity() {
   // TODO: CORRECT THIS SO IT MAKES SENSE
   //if ((REQUEST_TIME - $apachesolr_popularity_timestamp) >= 86400) {
   
+  $flag = 0x0;
 
   // gets tracking statistics
-  $query = db_query("SELECT * FROM {apachesolr_popularity_counter}");
+  $query = db_query("SELECT * FROM {apachesolr_popularity_counter} WHERE flag & :flag = 0", array(':flag' => $flag));
   
   // get max recent count. used for normalization
-  $recentcount_max = db_query("SELECT MAX(recentcount) FROM {apachesolr_popularity_counter}")->fetchField();
+  $recentcount_max = db_query("SELECT MAX(recentcount) FROM {apachesolr_popularity_counter} WHERE flag & :flag = 0", array(':flag' => $flag))->fetchField();
 
   // prevents division by zero
   if ( $elapsed_time == 0.0 ) $elapsed_time = 0.0001;
@@ -277,11 +310,13 @@ function _apachesolr_popularity_db_popularity_to_string() {
   // gets type of popularity compression
   $compression = variable_get('apachesolr_popularity_compression', 'N');
   
+  $flag = 0x0;
+  
   // queries the popularity values  
-  $query = db_query("SELECT nid, popularity FROM {apachesolr_popularity_counter}");
+  $query = db_query("SELECT nid, popularity FROM {apachesolr_popularity_counter} WHERE flag & :flag = 0", array(':flag' => $flag));
 
   // gets the maximum value
-  $pop_max = db_query("SELECT MAX(popularity) FROM {apachesolr_popularity_counter}")->fetchField();
+  $pop_max = db_query("SELECT MAX(popularity) FROM {apachesolr_popularity_counter} WHERE flag & :flag = 0", array(':flag' => $flag))->fetchField();
   
   // holds the popularity values in a string for solr
   $popularity_string = '';
@@ -353,24 +388,27 @@ function _apachesolr_popularity_format_item($nid) {
  */
 function apachesolr_popularity_node_insert($node) {  
   // Check if the only track published pages field is set and the node is unpublished
-  if (!(variable_get('apachesolr_popularity_only_published') AND !$node->status)) {
+  //if (!(variable_get('apachesolr_popularity_only_published') AND !$node->status)) {
     // begins tracking node
-    _apachesolr_popularity_add_node($node->nid);
-  }
+  _apachesolr_popularity_add_node($node);
+  
+  //}
 }
 
 
 /**
  * Adds a node to the tracking table using the node's nid
  */
-function _apachesolr_popularity_add_node($nid) {
+function _apachesolr_popularity_add_node($node) {
   // checks if already exists
   $exists = db_select('apachesolr_popularity_counter', 'pc')
     ->fields('pc', array('nid'))
-    ->condition('nid', $nid)
+    ->condition('nid', $node->nid)
     ->range(0, 1)
     ->execute()
     ->rowCount();
+  
+  $flag = ($node->status ^ UNPUBLISHED);
   
   // adds if doesn't exist
   if (!$exists) {
@@ -379,7 +417,8 @@ function _apachesolr_popularity_add_node($nid) {
           'nid' => $nid,
           'recentcount' => 0,
           'popularity' => (float) variable_get('apachesolr_popularity_init_popularity', 20.0),
-          'daystracked' => 0.0
+          'daystracked' => 0.0,
+          'flag' => $flag
         )
     )
     ->execute();  
@@ -446,11 +485,7 @@ function apachesolr_popularity_apachesolr_confgen_solrconfig_alter($qp, $solr_ve
  * Stops tracking (deletes) unpublished pages
  */
  function _apachesolr_popularity_delete_unpublished() {
-   // get front page nid
-   $front_nid = _apachesolr_popularity_get_front_page_nid();
-   // Delete front page tracking
-   if (isset($front_nid))
-     _apachesolr_popularity_delete_node($front_nid);
+   //TODO
  }
  
  
@@ -458,11 +493,7 @@ function apachesolr_popularity_apachesolr_confgen_solrconfig_alter($qp, $solr_ve
  * Begins tracking (adds) unpublished pages
  */
  function _apachesolr_popularity_track_unpublished() {
-   // get front page nid
-   $front_nid = _apachesolr_popularity_get_front_page_nid();
-   // start tracking the front page node
-   if (isset($front_nid))    
-     _apachesolr_popularity_add_node($front_nid);
+   //TODO
  }
  
 /*
@@ -481,13 +512,29 @@ function apachesolr_popularity_apachesolr_confgen_solrconfig_alter($qp, $solr_ve
  }
 
  
+ 
+ 
 /*
  * Implements hook node update
  * 
  * Finds whether a node's published status has changed 
  */
 function apachesolr_popularity_node_update($node) {
+  
+  $flag = db_query('SELECT flag FROM {apachesolr_popularity_counter} WHERE nid = :nid', array(':nid' => $node->nid))->fetchfield(0);
+  
+  setflag($flag, UNPUBLISHED, !$node->status);
+  
+  db_update('apachesolr_popularity_counter')
+      ->fields(array(
+              'flag' => $flag
+              )
+      )
+      ->condition('nid', $node->nid)
+      ->execute();
+  
   // Check if the only track published pages field is set
+  /*
   if (variable_get('apachesolr_popularity_only_published')) {
     if ($node->type == 'article') {
       // Stop tracking nodes that are no longer published
@@ -509,4 +556,6 @@ function apachesolr_popularity_node_update($node) {
       }
     }
   }
+   
+   */
 }
