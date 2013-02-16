@@ -29,11 +29,14 @@ function apachesolr_popularity_top_pages() {
   );
   
   // there is probably a better way to do this.  not sure how to use bitwise operations with db_select().  can do it with db_query() if it can be converted
-  $flag_array = array(0);
+  $flag_array = array(0, 1, 2, 3);
+  /*
   if (!variable_get('apachesolr_popularity_only_published')) $flag_array[] = 1;
   if (!variable_get('apachesolr_popularity_disable_frontpage')) $flag_array[] = 2;
   if (!variable_get('apachesolr_popularity_only_published') and !variable_get('apachesolr_popularity_disable_frontpage')) $flag_array[] = 3;
-    
+  */
+  
+  
   $query = db_select('apachesolr_popularity_counter', 'p', array('target' => 'slave'))->extend('PagerDefault')->extend('TableSort');
   //$query->addExpression('COUNT(path)', 'hits');
   $query->fields('p', array('nid', 'popularity', 'recentcount', 'daystracked', 'flag'));
