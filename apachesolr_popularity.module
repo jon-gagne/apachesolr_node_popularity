@@ -16,10 +16,18 @@ if (!defined('UNPUBLISHED')) {
 if (!defined('FRONTPAGE')) {
   define('FRONTPAGE', 0x2);
 }
-// unused, but an example of how to expand the flash in the future
-if (!defined('MISC_ATTRIBUTE')) {
+// unused, but an example of how to expand the flash in the future. Flag value should be increased by pow(2, x)
+/*
+if (!defined('MISC_ATTRIBUTE1')) {
   define('MISC_ATTRIBUTE', 0x4);
 }
+if (!defined('MISC_ATTRIBUTE2')) {
+  define('MISC_ATTRIBUTE', 0x8);
+}
+if (!defined('MISC_ATTRIBUTE3')) {
+  define('MISC_ATTRIBUTE', 0x16);
+}
+*/
 
 
 // Other constants
@@ -503,7 +511,7 @@ function apachesolr_popularity_apachesolr_confgen_solrconfig_alter($qp, $solr_ve
  }
 
  
- /*
+/**
  * Stops tracking (deletes) unpublished pages
  */
  function _apachesolr_popularity_delete_unpublished() {
@@ -511,14 +519,14 @@ function apachesolr_popularity_apachesolr_confgen_solrconfig_alter($qp, $solr_ve
  }
  
  
- /*
+/**
  * Begins tracking (adds) unpublished pages
  */
  function _apachesolr_popularity_track_unpublished() {
    //TODO
  }
  
-/*
+/**
  * Stops tracking (deletes) front page popularity
  */
  function _apachesolr_popularity_delete_front_page_popularity() {
@@ -526,7 +534,7 @@ function apachesolr_popularity_apachesolr_confgen_solrconfig_alter($qp, $solr_ve
  }
  
  
- /*
+/**
  * Begins tracking (adds) front page popularity
  */
  function _apachesolr_popularity_track_front_page_popularity() {
@@ -536,7 +544,7 @@ function apachesolr_popularity_apachesolr_confgen_solrconfig_alter($qp, $solr_ve
  
  
  
-/*
+/**
  * Implements hook node update
  * 
  * Finds whether a node's published status has changed 
@@ -587,7 +595,7 @@ function apachesolr_popularity_node_update($node) {
  * Get tracking flags (that are set up in basic settings
  */
 function _apachesolr_popularity_get_tracking_flags() {
-  $flag = 0x0;  
+  $flag = 0x0;
   if (variable_get('apachesolr_popularity_only_published')) setflag($flag, UNPUBLISHED);
   if (variable_get('apachesolr_popularity_disable_frontpage')) setflag($flag, FRONTPAGE);
   return $flag;
@@ -598,7 +606,7 @@ function _apachesolr_popularity_get_tracking_flags() {
  * Get node flags
  */
 function _apachesolr_popularity_get_node_flags($node) {
-  $flag = 0x0;  
+  $flag = 0x0;
   if (!$node->status) setflag($flag, UNPUBLISHED);
   if ($node->nid == _apachesolr_popularity_get_front_page_nid()) setflag($flag, FRONTPAGE);
   return $flag;
@@ -611,7 +619,7 @@ function _apachesolr_popularity_get_nid_flags($nid) {
   // Get node status from nid
   $node_status = db_query("SELECT status FROM {node} WHERE nid = :nid LIMIT 1", array(':nid' => $nid))->fetchField();
   // Set flags
-  $flag = 0x0;  
+  $flag = 0x0;
   if (!$node_status) setflag($flag, UNPUBLISHED);
   if ($nid == _apachesolr_popularity_get_front_page_nid()) setflag($flag, FRONTPAGE);
   return $flag;

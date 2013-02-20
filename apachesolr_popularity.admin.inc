@@ -27,15 +27,9 @@ function apachesolr_popularity_top_pages() {
     array('data' => t('Days Tracked'), 'field' => 'daystracked'),
     array('data' => t('Tracking flag'), 'field' => 'flag'),
   );
-  
-  // there is probably a better way to do this.  not sure how to use bitwise operations with db_select().  can do it with db_query() if it can be converted
-  $flag_array = array(0, 1, 2, 3);
-  /*
-  if (!variable_get('apachesolr_popularity_only_published')) $flag_array[] = 1;
-  if (!variable_get('apachesolr_popularity_disable_frontpage')) $flag_array[] = 2;
-  if (!variable_get('apachesolr_popularity_only_published') and !variable_get('apachesolr_popularity_disable_frontpage')) $flag_array[] = 3;
-  */
-  
+    
+  // Set tracking flags. Aka nodes NOT to track
+  $flag = _apachesolr_popularity_get_tracking_flags();
   
   $query = db_select('apachesolr_popularity_counter', 'p', array('target' => 'slave'))->extend('PagerDefault')->extend('TableSort');
   //$query->addExpression('COUNT(path)', 'hits');
@@ -43,11 +37,12 @@ function apachesolr_popularity_top_pages() {
   //$query->addExpression('flag = 0');
   $query       
     ->groupBy('nid')
-    ->condition('flag', $flag_array, 'IN')  // if you can find a way to do this as flags it's even better
+    ->where('flag & :flag = 0', array(':flag' => $flag))           
     ->limit(30)
     ->orderByHeader($header)
     ->orderBy('popularity', 'desc')
     ->orderBy('recentcount', 'desc');
+    //->condition('flag', $flag_array, 'IN')  // if you can find a way to do this as flags it's even better
   
   $result = $query->execute();
   $rows = array();
