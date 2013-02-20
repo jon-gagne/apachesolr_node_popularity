@@ -261,27 +261,11 @@ function apachesolr_popularity_settings_form_submit($form, &$form_state) {
   // Checks if only track published pages has changed
   if ( $form_state['values']['apachesolr_popularity_only_published'] != variable_get('apachesolr_popularity_only_published') ) {
     $send_to_solr = true;
-    // removes front page tracking data
-    if ( $form_state['values']['apachesolr_popularity_only_published'] == 1 ) {
-      _apachesolr_popularity_delete_unpublished();
-    }
-    // adds front page tracking data
-    else if ( $form_state['values']['apachesolr_popularity_only_published'] == 0 ) {
-      _apachesolr_popularity_track_unpublished();
-    }
-  }
+  }   
  
   // Checks if front page tracking has changed
   if ( $form_state['values']['apachesolr_popularity_disable_frontpage'] != variable_get('apachesolr_popularity_disable_frontpage') ) {
     $send_to_solr = true;
-    // removes front page tracking data
-    if ( $form_state['values']['apachesolr_popularity_disable_frontpage'] == 1 ) {
-      _apachesolr_popularity_delete_front_page_popularity();
-    }
-    // adds front page tracking data
-    else if ( $form_state['values']['apachesolr_popularity_disable_frontpage'] == 0 ) {
-      _apachesolr_popularity_track_front_page_popularity();
-    }
   }
     
   // Resets popularity tracking
@@ -468,31 +452,13 @@ function _track_new_nodes() {
   $popularity = (float) variable_get('apachesolr_popularity_init_popularity', 20.0);
   $query = db_insert('apachesolr_popularity_counter')->fields(array('nid'));
   
-  // check whether front page tracking is disabled
-  if (variable_get('apachesolr_popularity_disable_frontpage', 1)) {
-    // get front page nid if available
-    $front_nid = _apachesolr_popularity_get_front_page_nid();
-    foreach ($node_create_list as $node) {
-      // only add nodes that aren't the front page
-      if ($front_nid != $node->nid){
-        $query->values(array(
-              'nid' => $node->nid,
-              'popularity' => $popularity
-            ));     
-        $query->execute();
-      }      
-    }
-  } 
-  // front page tracking is enabled therefore add all nodes
-  else {
-    foreach ($node_create_list as $node) {
-      $query->values(array(
-            'nid' => $node->nid,
-            'popularity' => $popularity
-          ));
-    }
-    $query->execute();  
+  foreach ($node_create_list as $node) {
+    $query->values(array(
+          'nid' => $node->nid,
+          'popularity' => $popularity
+        ));
   }
+  $query->execute();  
 }
 
 
