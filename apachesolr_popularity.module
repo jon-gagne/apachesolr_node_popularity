@@ -45,7 +45,6 @@ function setflag(&$var, $flag, $set=ON) {
 }
 
 
-
 /**
  * Implements hook_exit().
  *
@@ -386,12 +385,7 @@ function _apachesolr_popularity_send_data_to_solr($data) {
 function _apachesolr_popularity_format_item($nid) {
   
   $path = "node/".$nid;
-  
   $title = db_query('SELECT title FROM {node} WHERE nid = :nid', array(':nid' => $nid))->fetchfield(0);
-
-  //$output  = ($title ? "$title<br />" : '');
-  //$title .= drupal_get_path_alias($path);
-  //$title_length = strlen( $title );
   $title = truncate_utf8($title, 60, TRUE, TRUE, 45);
   
   $output = l($title, $path);
@@ -412,34 +406,9 @@ function apachesolr_popularity_node_insert($node) {
  * Adds a node to the tracking table using the node's nid
  */
 function _apachesolr_popularity_add_node($node) {
-  // checks if already exists
-  /*
-  $exists = db_select('apachesolr_popularity_counter', 'pc')
-    ->fields('pc', array('nid'))
-    ->condition('nid', $node->nid)
-    ->range(0, 1)
-    ->execute()
-    ->rowCount();
-  */
-  //$flag = ($node->status ^ UNPUBLISHED);
     // Set tracking flags. Aka nodes NOT to track
   $flag = _apachesolr_popularity_get_node_flags($node);
   
-  // adds if doesn't exist
-  /*
-  if (!$exists) {
-    db_insert('apachesolr_popularity_counter')
-      ->fields(array(
-          'nid' => $nid,
-          'recentcount' => 0,
-          'popularity' => (float) variable_get('apachesolr_popularity_init_popularity', 20.0),
-          'daystracked' => 0.0,
-          'flag' => $flag
-        )
-    )
-    ->execute();  
-  }
-   */
   db_merge('apachesolr_popularity_counter')
       ->key(array('nid' => $node->nid))
       ->insertFields(array(
@@ -510,40 +479,7 @@ function apachesolr_popularity_apachesolr_confgen_solrconfig_alter($qp, $solr_ve
     ->after("\n\n  <!-- Reload Cache Request Handler -->\n  <requestHandler name=\"/reloadCache\" class=\"org.apache.solr.search.function.FileFloatSource\$ReloadCacheRequestHandler\"/>");
  }
 
- 
-/**
- * Stops tracking (deletes) unpublished pages
- */
- function _apachesolr_popularity_delete_unpublished() {
-   //TODO
- }
- 
- 
-/**
- * Begins tracking (adds) unpublished pages
- */
- function _apachesolr_popularity_track_unpublished() {
-   //TODO
- }
- 
-/**
- * Stops tracking (deletes) front page popularity
- */
- function _apachesolr_popularity_delete_front_page_popularity() {
-   // TODO
- }
- 
- 
-/**
- * Begins tracking (adds) front page popularity
- */
- function _apachesolr_popularity_track_front_page_popularity() {
-   // TODO
- }
 
- 
- 
- 
 /**
  * Implements hook node update
  * 
@@ -562,34 +498,7 @@ function apachesolr_popularity_node_update($node) {
       )
       ->condition('nid', $node->nid)
       ->execute();
-  
-  // Check if the only track published pages field is set
-  /*
-  if (variable_get('apachesolr_popularity_only_published')) {
-    if ($node->type == 'article') {
-      // Stop tracking nodes that are no longer published
-      if ($node->original->status == 1 && $node->status == 0) {
-        // clean up popularity table when node is deleted
-        db_delete('apachesolr_popularity_counter')
-          ->condition('nid', $node->nid)
-          ->execute();
-      }
-      // Start tracking nodes that are no longer published
-      if ($node->original->status == 0 && $node->status == 1) {
-        // Set up the popularity counter table to begin tracking
-        db_merge('apachesolr_popularity_counter')
-          ->key(array('nid' => $node->nid))
-          ->fields(array(
-            'popularity' => (float) variable_get('apachesolr_popularity_init_popularity', 20.0)
-          ))
-          ->execute();
-      }
-    }
-  }
-   
-   */
 }
-
 
 /**
  * Get tracking flags (that are set up in basic settings
@@ -600,7 +509,6 @@ function _apachesolr_popularity_get_tracking_flags() {
   if (variable_get('apachesolr_popularity_disable_frontpage')) setflag($flag, FRONTPAGE);
   return $flag;
 }
-
 
 /**
  * Get node flags
@@ -637,7 +545,7 @@ function _apachesolr_popularity_set_front_page_flags() {
     db_merge('apachesolr_popularity_counter')
       ->key(array('nid' => $front_nid))
       ->insertFields(array(
-          'nid' => $front_flags,
+          'nid' => $front_nid,
           'recentcount' => 0,
           'popularity' => (float) variable_get('apachesolr_popularity_init_popularity', 20.0),
           'daystracked' => 0.0,
@@ -647,6 +555,5 @@ function _apachesolr_popularity_set_front_page_flags() {
           'flag' => $front_flags
       ))
       ->execute();
-  }
-  
+  }  
 }

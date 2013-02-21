@@ -108,7 +108,6 @@ function apachesolr_popularity_settings_form() {
   $form['basic_config']['apachesolr_popularity_influence'] = array(
       '#type' => 'select',
       '#title' => t('Popularity influence'),
-      //'#default_value' => array_search($popularity_influence, $popularity_influence_options), //,
       '#default_value' => (string) variable_get('apachesolr_popularity_influence', '2'),
       '#options' => $popularity_influence_options,
       '#description' => t("Amount that node popularity influences Apache Solr's ranking scores.<br>Ranking scores will be increase up to this amount."),
@@ -123,7 +122,6 @@ function apachesolr_popularity_settings_form() {
   $form['basic_config']['apachesolr_popularity_forgetting_window'] = array(
       '#type' => 'select',
       '#title' => t('Forgetting window'),
-      //'#default_value' => array_search($forgetting_window, $forgetting_window_options),
       '#default_value' => (string) variable_get('apachesolr_popularity_forgetting_window', '5'),
       '#options' => $forgetting_window_options,
       '#description' => t('After this many days of tracking, biasing recent popularity begins to fade on. <br> The lower the value is, the more that newer popularity measurements are biased.'),
@@ -159,7 +157,6 @@ function apachesolr_popularity_settings_form() {
     ),  
   );
   
-  
   $form['reset_fieldset'] = array(
     '#type' => 'fieldset',
     '#title' => t('Clear popularity values'),
@@ -178,7 +175,6 @@ function apachesolr_popularity_settings_form() {
   
   $form['reset_fieldset']['confirm_reset_fieldset'] = array(
     '#type' => 'fieldset',
-    //'#title' => t('Confirm reset? (Cannot be undone)'),
     '#states' => array(
       'visible' => array(
         ':input[name="reset_tracker"]' => array('checked' => TRUE)
@@ -274,7 +270,6 @@ function apachesolr_popularity_settings_form_submit($form, &$form_state) {
     $send_to_solr = true;
   }  
   
-    
   // Check if popularity should be sent to solr
   if ( $send_to_solr == true ) {   
     $dir = variable_get('apachesolr_popularity_solr_data_dir');
@@ -321,12 +316,10 @@ function apachesolr_popularity_advanced_form() {
     );    
   }  
   
-  //$init_damping = variable_get('apachesolr_popularity_init_damping', 0.2);
   $init_damping_options = array( '0' => '0.0', '0.05' => '0.05', '0.2' => '0.2', '0.5' => '0.5', '1' => '1', '2' => '2', '5' => '5' );
   $form['settings']['apachesolr_popularity_init_damping'] = array(
       '#type' => 'select',
       '#title' => t('Initial dampening'),
-      //'#default_value' => array_search($init_damping, $init_damping_options), 
       '#default_value' => (string) variable_get('apachesolr_popularity_init_damping', '0.2'),
       '#options' => $init_damping_options,
       '#description' => t("Smoothes initial popularity estimates.<br> 0 = None, 0.2 = Moderate, 2 = High."),
@@ -337,12 +330,10 @@ function apachesolr_popularity_advanced_form() {
       ),
   );
   
-  //$init_popularity = variable_get('apachesolr_popularity_init_popularity', 20);
   $init_popularity_options = array( '0' => '0', '10' => '10', '20' => '20', '50' => '50', '100' => '100' );
   $form['settings']['apachesolr_popularity_init_popularity'] = array(
       '#type' => 'select',
       '#title' => t('Initial node popularity'),
-      //'#default_value' => array_search($init_popularity, $init_popularity_options), //,
       '#default_value' => (string) variable_get('apachesolr_popularity_init_popularity', '20'),
       '#options' => $init_popularity_options,
       '#description' => t("Sets inital popularity for newly tracked nodes.<br>Starting popularity: 0 = Lowest, 20 = Moderate, 100 = Highest."),
@@ -353,12 +344,10 @@ function apachesolr_popularity_advanced_form() {
       ),
   );
     
-  //$compression = variable_get('apachesolr_popularity_compression', 'Sqrt');
   $compression_options = array( 'N' => 'None', 'S' => 'Sqrt', 'L' => 'Log' );
   $form['settings']['apachesolr_popularity_compression'] = array(
       '#type' => 'select',
       '#title' => t('Popularity compression on high traffic nodes'),
-      //'#default_value' => array_search($compression, $compression_options), //,
       '#default_value' => (string) variable_get('apachesolr_popularity_compression', 'N'),
       '#options' => $compression_options,
       '#description' => t("Prevent high traffic nodes from dominating the search results.<br>Compression type: Linear = None, Sqrt = Moderate, Log = High."),
@@ -369,12 +358,10 @@ function apachesolr_popularity_advanced_form() {
       ),
   );
     
-  //$low_pop_influence = variable_get('apachesolr_popularity_low_pop_influence', 1);
   $low_pop_influence_options = array( '0' => '0', '0.2' => '0.2', '0.5' => '0.5', '1' => '1', '2' => '2' );
   $form['settings']['apachesolr_popularity_low_pop_influence'] = array(
       '#type' => 'select',
       '#title' => t('Low popularity influence'),
-      //'#default_value' => array_search($low_pop_influence, $low_pop_influence_options), //,
       '#default_value' => (string) variable_get('apachesolr_popularity_low_pop_influence', '1'),
       '#options' => $low_pop_influence_options,
       '#description' => t("Allows unpopular pages to still still be found in a search.<br> 0 = Hard to find unpopular page, 1 = Typical, 2 = Found easier."),
@@ -397,7 +384,6 @@ function apachesolr_popularity_advanced_form() {
  */
 function apachesolr_popularity_advanced_form_submit($form, &$form_state) {
 
-      
   // Checks if initial damping has changed
   if ( $form_state['values']['apachesolr_popularity_init_damping'] != variable_get('apachesolr_popularity_init_damping') ) {
     drupal_set_message(t("Initial damping changed.  This will effect future popularity values only."));
