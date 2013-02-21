@@ -136,6 +136,7 @@ function apachesolr_popularity_settings_form() {
     '#title' => t('Only track published pages'),
     '#default_value' => variable_get('apachesolr_popularity_only_published', 1),
     '#description' => t('Pages may receve a number of hits during creation, which may not relect the popularity of the node at query time.\nNote: a page is considered published if the page\'s publish field is checked'),
+    '#default_value' => variable_get('apachesolr_popularity_only_published', TRUE),
     '#states' => array(
       'enabled' => array(
         ':input[name="apachesolr_popularity_popularity_tracker"]' => array('checked' => TRUE),
@@ -148,6 +149,7 @@ function apachesolr_popularity_settings_form() {
     '#title' => t('Disable popularity tracking for the front page'),
     '#default_value' => variable_get('apachesolr_popularity_disable_frontpage', 1),
     '#description' => t('Due to the high number of views of most front pages, disabling popularity tracking of it will generally improve search result.'),
+    '#default_value' => variable_get('apachesolr_popularity_disable_frontpage', TRUE),
     '#states' => array(
       'enabled' => array(
         ':input[name="apachesolr_popularity_popularity_tracker"]' => array('checked' => TRUE),

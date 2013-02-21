@@ -20,8 +20,8 @@ function apachesolr_popularity_uninstall() {
   variable_del('apachesolr_popularity_day_timestamp');
   variable_del('apachesolr_popularity_influence');
   variable_del('apachesolr_popularity_forgetting_window');  
-  variable_del('apachesolr_popularity_disable_frontpage');
   variable_del('apachesolr_popularity_only_published');
+  variable_del('apachesolr_popularity_disable_frontpage');
   variable_del('apachesolr_popularity_enable_advanced');
   variable_del('apachesolr_popularity_init_damping') ;
   variable_del('apachesolr_popularity_init_popularity');
@@ -38,8 +38,8 @@ function apachesolr_popularity_install() {
   // Setting initial values
   variable_set('apachesolr_popularity_influence', '2');
   variable_set('apachesolr_popularity_forgetting_window', '5');
-  variable_set('apachesolr_popularity_disable_frontpage', '1');
-  variable_set('apachesolr_popularity_only_published', '1');
+  variable_set('apachesolr_popularity_disable_frontpage', TRUE);
+  variable_set('apachesolr_popularity_only_published', TRUE);
   variable_set('apachesolr_popularity_enable_advanced', FALSE);
   variable_set('apachesolr_popularity_init_damping', '0.2') ;
   variable_set('apachesolr_popularity_init_popularity', '20');
