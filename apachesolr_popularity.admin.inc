@@ -424,7 +424,7 @@ function _track_new_nodes() {
   
   // Find nodes that are in Drupal's node table that aren't in the apachesolr_popularity_counter table
   $node_create_list = db_query(
-            'SELECT n.nid
+            'SELECT n.nid n.status
              FROM {node} AS n
              LEFT JOIN {apachesolr_popularity_counter} AS apc
              ON n.nid=apc.nid
@@ -433,13 +433,21 @@ function _track_new_nodes() {
 
   // Get initial popularity value
   $popularity = (float) variable_get('apachesolr_popularity_init_popularity', 20.0);
-  // Inserts new nodes
+  // Get front page nid
+  $frontpage_nid = _apachesolr_popularity_get_front_page_nid();
+  
+  // Add nodes
   $query = db_insert('apachesolr_popularity_counter')->fields(array('nid'));  
   foreach ($node_create_list as $node) {
+    // Set node flags
+    $flag = 0x0;
+    if (!$node->status) setflag($flag, UNPUBLISHED);               // Get the node's published status
+    if ($node->nid == $frontpage_nid) setflag($flag, FRONTPAGE);   // Get whether the page is a front page
+    // Insert new node
     $query->values(array(
           'nid' => $node->nid,
-          'popularity' => $popularity
-          //'flag' => SET THIS TOO
+          'popularity' => $popularity,
+          'flag' => $flag
         ));
   }
   $query->execute();  
