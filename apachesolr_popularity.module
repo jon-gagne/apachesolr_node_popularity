@@ -307,54 +307,6 @@ function _apachesolr_popularity_send_to_solr() {
 /**
  * Gets popularity from database and puts it into a string
  */
-/*
-function _apachesolr_popularity_db_popularity_to_string() {
-  
-  // Get popularity coefficient
-  $pop_coefficient = (float) variable_get('apachesolr_popularity_influence', 2.0);
-  
-  // Get low popularity influence  
-  $low_pop_influence = (float) variable_get('apachesolr_popularity_low_pop_influence', 1.0);
-  
-  // Get type of popularity compression
-  $compression = variable_get('apachesolr_popularity_compression', 'N');
-  
-  // Set tracking flags. Aka nodes NOT to track
-  $flag = _apachesolr_popularity_get_tracking_flags();
-  
-  // Query the popularity values  
-  $query = db_query("SELECT nid, popularity FROM {apachesolr_popularity_counter} WHERE flag & :flag = 0", array(':flag' => $flag));
-
-  // Get the maximum value
-  $pop_max = db_query("SELECT MAX(popularity) FROM {apachesolr_popularity_counter} WHERE flag & :flag = 0", array(':flag' => $flag))->fetchField();
-  
-  // Hold the popularity values in a string for solr
-  $popularity_string = '';
-  
-  // Write the popularity
-  foreach ($query as $record) {
-   
-    // Deterime compression type for popularity normalion and calculate popularity_ranking_score
-    if ($compression == 'S') {  // Square root normalization
-      $popularity_ranking_score = $low_pop_influence + $pop_coefficient * _normalize_pop_root($record->popularity, $pop_max);
-    }
-    else if ($compression == 'L') {  // Logrithmic normalization
-      $popularity_ranking_score = $low_pop_influence + $pop_coefficient * _normalize_pop_log($record->popularity, $pop_max);      
-    }
-    else {   // Basic linear normalization
-      $popularity_ranking_score = $low_pop_influence + $pop_coefficient * _normalize_pop_linear($record->popularity, $pop_max);
-    }
-    // Write sting in a form that Solr will understand via use of external file field
-    $popularity_string .= apachesolr_site_hash() . "/node/" . $record->nid . "=" . $popularity_ranking_score . "\n";      
-  }
-  
-  return $popularity_string;
-}
-*/
-
-/**
- * Gets popularity from database and puts it into a string
- */
 function _apachesolr_popularity_update_ranking_modifier() {
   
   // Get popularity coefficient
