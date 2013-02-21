@@ -8,7 +8,6 @@
  *   @see drupal.org/user/2409764
  */
 
-
 // tracking flag constants
 if (!defined('UNPUBLISHED')) {
   define('UNPUBLISHED', 0x1);
