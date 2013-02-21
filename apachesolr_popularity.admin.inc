@@ -19,8 +19,9 @@
  */
 function apachesolr_popularity_top_pages() {
   
+  // Used for creating and ordering the table
   $header = array(
-    array('data' => t('Title'), 'field' => 'nid'),
+    array('data' => t('Title'), 'field' => 'nid'),  // Note, cannot order by this
     //array('data' => t('Node ID'), 'field' => 'nid'),
     array('data' => t('Popularity'), 'field' => 'popularity', 'sort' => 'desc'),
     array('data' => t('Recent Count'), 'field' => 'recentcount', 'sort' => 'desc'),
@@ -31,10 +32,9 @@ function apachesolr_popularity_top_pages() {
   // Set tracking flags. Aka nodes NOT to track
   $flag = _apachesolr_popularity_get_tracking_flags();
   
+  // Queries the popularity data from databases
   $query = db_select('apachesolr_popularity_counter', 'p', array('target' => 'slave'))->extend('PagerDefault')->extend('TableSort');
-  //$query->addExpression('COUNT(path)', 'hits');
   $query->fields('p', array('nid', 'popularity', 'recentcount', 'daystracked', 'flag'));
-  //$query->addExpression('flag = 0');
   $query       
     ->groupBy('nid')
     ->where('flag & :flag = 0', array(':flag' => $flag))           
@@ -42,14 +42,13 @@ function apachesolr_popularity_top_pages() {
     ->orderByHeader($header)
     ->orderBy('popularity', 'desc')
     ->orderBy('recentcount', 'desc');
-    //->condition('flag', $flag_array, 'IN')  // if you can find a way to do this as flags it's even better
   
   $result = $query->execute();
   $rows = array();
+  // Builds table data
   foreach ($result as $page) {
-    $rows[] = array(_apachesolr_popularity_format_item($page->nid), /*$page->nid,*/ $page->popularity, $page->recentcount, $page->daystracked, $page->flag);
+    $rows[] = array(_apachesolr_popularity_format_item($page->nid), $page->popularity, $page->recentcount, $page->daystracked, $page->flag);
   }
-  //TODO: Change nid to a link to the path
   
   drupal_set_title(t('Most popular pages'), PASS_THROUGH);
   $build['popularity_top_pages_table'] = array(
@@ -69,7 +68,7 @@ function apachesolr_popularity_top_pages() {
 function apachesolr_popularity_settings_form() {
   // Config page
   
-  // reloads Solr cache
+  // Gets Solr server details
   $default_env_id = variable_get('apachesolr_default_environment', 'solr');
   $default_solr_env = db_query('SELECT * FROM {apachesolr_environment} WHERE env_id = :env_id', array(':env_id' => $default_env_id))->fetchObject();
   if (isset($default_solr_env->name) != '' AND isset($default_solr_env->url)) {
@@ -79,7 +78,7 @@ function apachesolr_popularity_settings_form() {
     $solr_description = t('<strong>* Error locating default Solr server.  ') . l(t('Check Apache Solr Settings'), 'admin/config/search/apachesolr/settings/') . ' *</strong><br><br>';
   }    
     
-  
+  // Basic Solr settings
   $form['solr_settings'] = array(
     '#type' => 'fieldset',
     '#title' => t('Solr Settings'),
@@ -99,7 +98,7 @@ function apachesolr_popularity_settings_form() {
     '#maxlength' => 256,
     '#required' => TRUE
   );
-  
+  // Basic config settings
   $form['basic_config'] = array(
     '#type' => 'fieldset',
     '#title' => t('Basic popularity configurations'),
@@ -156,7 +155,7 @@ function apachesolr_popularity_settings_form() {
       ),
     ),  
   );
-  
+  // Clear popularity values
   $form['reset_fieldset'] = array(
     '#type' => 'fieldset',
     '#title' => t('Clear popularity values'),
@@ -171,8 +170,7 @@ function apachesolr_popularity_settings_form() {
           ':input[name="apachesolr_popularity_solr_data_dir"]' => array('empty' => FALSE)
         ),
       ),
-  );
-  
+  );  
   $form['reset_fieldset']['confirm_reset_fieldset'] = array(
     '#type' => 'fieldset',
     '#states' => array(
@@ -204,12 +202,13 @@ function apachesolr_popularity_settings_form() {
  * Validate setting form - hook_form_validate
  */
 function apachesolr_popularity_settings_form_validate($form, &$form_state) {
-  
+  // Verifies that if the reset tracker was clicked, it was also confirmed
   if ( $form_state['values']['reset_tracker']==1 AND 
        $form_state['values']['confirm_reset']==0) {
     form_set_error('confirm_reset', t('Please confirm reset!'));
   }
   
+  // Verifies that the Solr data directory exists and is writable
   $dir = $form_state['values']['apachesolr_popularity_solr_data_dir'];
   if ( $dir != '' ) {
     if ( !file_exists($dir) ) form_set_error('apachesolr_popularity_solr_data_dir', t('Directory does not exist'));
@@ -222,14 +221,12 @@ function apachesolr_popularity_settings_form_validate($form, &$form_state) {
   }
 }
 
-
-
 /**
  * Process form - hook_form_submit
  */
 function apachesolr_popularity_settings_form_submit($form, &$form_state) {
   
-  // whether to update solr with popularity data
+  // Whether to update solr with popularity data
   $send_to_solr = false;
   
   // Sets up popularity tracking table
@@ -265,7 +262,7 @@ function apachesolr_popularity_settings_form_submit($form, &$form_state) {
   }
     
   // Resets popularity tracking
-  if ( $form_state['values']['reset_tracker']==1 AND $form_state['values']['confirm_reset']==1) {
+  if ( $form_state['values']['reset_tracker']==1 AND $form_state['values']['confirm_reset']==1 ) {
     _reset_popularity();
     $send_to_solr = true;
   }  
@@ -274,9 +271,10 @@ function apachesolr_popularity_settings_form_submit($form, &$form_state) {
   if ( $send_to_solr == true ) {   
     $dir = variable_get('apachesolr_popularity_solr_data_dir');
     if ( $dir == '' OR !file_exists($dir) OR !is_writable($dir) ) {       
-      drupal_set_message(t('Solr data directory'));
+      drupal_set_message(t('Solr data directory not properly set!'));
     }
     else {
+      // If everything is okay, send it to Solr
       drupal_set_message(t("Popularity data sent to Apache Solr."));
       _apachesolr_popularity_send_to_solr();
     }
@@ -289,19 +287,16 @@ function apachesolr_popularity_settings_form_submit($form, &$form_state) {
  */
 function apachesolr_popularity_advanced_form() {
   
-  $form_changed = false;
-  
-  // Config page
+  // Advanced settings page
   $form['settings'] = array(
     '#type' => 'fieldset',
     '#title' => t('Advanced Popularity Settings'),
-  );
-  
+  );  
   if ( variable_get('popularity_tracker')==1 ) {
     $form['settings']['apachesolr_popularity_enable_advanced'] = array(
       '#type' => 'checkbox',
       '#title' => t('Enables advanced settings'),
-      '#default_value' => variable_get('apachesolr_popularity_enable_advanced', FALSE),     
+      '#default_value' => variable_get('apachesolr_popularity_enable_advanced', FALSE),
       '#description' => t('For advanced users only'),
     );
   }
@@ -427,6 +422,7 @@ function apachesolr_popularity_advanced_form_submit($form, &$form_state) {
  */
 function _track_new_nodes() {
   
+  // Find nodes that are in Drupal's node table that aren't in the apachesolr_popularity_counter table
   $node_create_list = db_query(
             'SELECT n.nid
              FROM {node} AS n
@@ -435,13 +431,15 @@ function _track_new_nodes() {
              WHERE apc.nid IS NULL'
             );
 
+  // Get initial popularity value
   $popularity = (float) variable_get('apachesolr_popularity_init_popularity', 20.0);
-  $query = db_insert('apachesolr_popularity_counter')->fields(array('nid'));
-  
+  // Inserts new nodes
+  $query = db_insert('apachesolr_popularity_counter')->fields(array('nid'));  
   foreach ($node_create_list as $node) {
     $query->values(array(
           'nid' => $node->nid,
           'popularity' => $popularity
+          //'flag' => SET THIS TOO
         ));
   }
   $query->execute();  
@@ -452,7 +450,9 @@ function _track_new_nodes() {
  * Resets node popularities
  */
 function _reset_popularity() {
+  // Gets initial popularity
   $popularity = (float) variable_get('apachesolr_popularity_init_popularity', 20.0);
+  // Resets all nodes
   db_update('apachesolr_popularity_counter')
         ->fields(array(
                 'popularity' => $popularity,

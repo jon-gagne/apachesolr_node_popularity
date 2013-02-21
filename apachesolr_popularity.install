@@ -53,10 +53,8 @@ function apachesolr_popularity_install() {
  * 
  * Initializes popularity tracking tables.
  */
-
-function apachesolr_popularity_enable() {
-  
-  // tracks time
+function apachesolr_popularity_enable() {  
+  // Tracks time
   variable_set('apachesolr_popularity_day_timestamp', REQUEST_TIME);      
   variable_set('popularity_tracker', 0);                   // tracking must be enabled in settings
 }
@@ -67,7 +65,7 @@ function apachesolr_popularity_enable() {
  * Implements hook_schema().
  */
 function apachesolr_popularity_schema() {
-  
+  // Database schema
   $schema['apachesolr_popularity_counter'] = array(
     'description' => 'Access statistics for {node}s.',
     'fields' => array(

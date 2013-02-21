@@ -37,7 +37,7 @@ if (!defined('ON')) {
   define('ON', TRUE);
 }
 
-// sets binary flags
+// Sets binary flags
 function setflag(&$var, $flag, $set=ON) {
   if ($set==ON) $var = ($var | $flag);
   if ($set==OFF) $var = ($var & ~$flag);
@@ -50,17 +50,18 @@ function setflag(&$var, $flag, $set=ON) {
  * Gathers statistics for page accesses.
  */
 function apachesolr_popularity_exit() {
-  
-  //global $user;
 
   drupal_bootstrap(DRUPAL_BOOTSTRAP_VARIABLES);
   
+  // If popularity tracking is enabled
   if (variable_get('popularity_tracker', 0)) {
     // We are counting content views.
-    if (arg(0) == 'node' && is_numeric(arg(1)) && arg(2) == NULL) {      
+    if (arg(0) == 'node' && is_numeric(arg(1)) && arg(2) == NULL) {
+      // Get node id from the URL
       $nid = arg(1);
-      // get tracking flags and also node flags
+      // Get tracking flags
       $tracking_flags = _apachesolr_popularity_get_tracking_flags();
+      // Get node flags
       $node_flags = _apachesolr_popularity_get_nid_flags($nid);
       // Only update nodes that should be tracked
       if (!($tracking_flags & $node_flags)) {
@@ -72,8 +73,7 @@ function apachesolr_popularity_exit() {
             'recentcount' => 1,
           ))
           ->expression('recentcount', 'recentcount + 1')
-          ->execute();
-        
+          ->execute();        
       }
     }
   }
@@ -88,36 +88,30 @@ function apachesolr_popularity_menu() {
     'description' => 'View most popular pages.',
     'page callback' => 'apachesolr_popularity_top_pages',
     'access arguments' => array('administer search'),
-//  'access arguments' => array('access statistics'),
     'file' => 'apachesolr_popularity.admin.inc',
   );
   $items['admin/config/search/apachesolr/apachesolr_popularity'] = array(
     'title' => 'Node Popularity',
-    //'description' => 'Configure Apache Solr Popularity Tracking.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('apachesolr_popularity_settings_form'),
     'access arguments' => array('administer search'),
     'file' => 'apachesolr_popularity.admin.inc',
     'type' => MENU_LOCAL_TASK,
   );
-
   $items['admin/config/search/apachesolr/apachesolr_popularity/basic_settings'] = array(
     'title' => 'Basic Settings',
     'weight' => 0,
     'type' => MENU_DEFAULT_LOCAL_TASK,
-  );
-  
+  );  
   $items['admin/config/search/apachesolr/apachesolr_popularity/advanced_settings'] = array(
     'title' => 'Advanced Settings',
     'weight' => 1,
-    //'description' => 'Advanced Settings - Apache Solr Popularity Tracking.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('apachesolr_popularity_advanced_form'),
     'access arguments' => array('administer search'),
     'file' => 'apachesolr_popularity.admin.inc',
     'type' => MENU_LOCAL_TASK,
-  );
-  
+  );  
   return $items;
 }
 
@@ -142,17 +136,18 @@ function apachesolr_popularity_cron() {
  */
 function _apachesolr_popularity_update_popularity() {
   
+  // Get timestamp of last popularity update
   $apachesolr_popularity_timestamp = variable_get('apachesolr_popularity_day_timestamp', '');
+  // Set the popularity timestamp of this update
   variable_set('apachesolr_popularity_day_timestamp', REQUEST_TIME);
   
+  // Get the forgetting window
   $forgetting_window = (float) variable_get('apachesolr_popularity_forgetting_window', 5.0);
+  // Get initial damping
   $init_damping = (float) variable_get('apachesolr_popularity_init_damping', 0.2);
     
-  // holds the popularity for each node
+  // hold the popularity for each node
   $popularity_data = array();
-  
-  // stores the node id
-  
   
   // TODO: get current time stamp to determine $elapsed time
   $elapsed_time = 0.2;
@@ -169,7 +164,7 @@ function _apachesolr_popularity_update_popularity() {
   // Set tracking flags. Aka nodes NOT to track
   $flag = _apachesolr_popularity_get_tracking_flags();
 
-  // Clear untracked values
+  // Clear tracking data on untracked nodes
   db_update('apachesolr_popularity_counter')
       ->fields(array(
               'recentcount' => 0,
@@ -179,26 +174,25 @@ function _apachesolr_popularity_update_popularity() {
       ->condition('flag', $flag, '&')
       ->execute();
   
-  // gets tracking statistics
+  // Get tracking statistics
   $query = db_query("SELECT * FROM {apachesolr_popularity_counter} WHERE flag & :flag = 0", array(':flag' => $flag));
   
-  // get max recent count. used for normalization
+  // Get recent max count for tracked nodes. Used for normalization
   $recentcount_max = db_query("SELECT MAX(recentcount) FROM {apachesolr_popularity_counter} WHERE flag & :flag = 0", array(':flag' => $flag))->fetchField();
 
-  // prevents division by zero
+  // Prevents division by zero
   if ( $elapsed_time == 0.0 ) $elapsed_time = 0.0001;
   if ( $recentcount_max < 1.0 ) $recentcount_max = 1.0;
   
-  // used for time scaling and recentcount normalization
+  // Used for time scaling and recentcount normalization
   $recentcount_normalization = 100.0 / ($recentcount_max);
   
-  // calculates popularity
+  // Calculates popularity
   foreach ($query as $record) {
-
-    //$popularity = ($record->recentcount / $elapsed_time) + ($epoch_decay_rate * $record->popularity);
+    // Total time tracked
     $total_time = $record->daystracked + $elapsed_time;
     
-    // calculate popularity
+    // Calculate popularity
     $popularity = ($record->popularity
                    + (_calculate_gain_logistic_decay($elapsed_time, $total_time+$init_damping, $forgetting_window) 
                       * 
@@ -206,6 +200,7 @@ function _apachesolr_popularity_update_popularity() {
                      )
                   );
     
+    // Updates popularity database value
     db_update('apachesolr_popularity_counter')
       ->fields(array(
               'popularity' => $popularity,
@@ -214,8 +209,7 @@ function _apachesolr_popularity_update_popularity() {
               )
       )
       ->condition('nid', $record->nid)
-      ->execute();
-        
+      ->execute();        
   }
 }
 
@@ -289,17 +283,19 @@ function _normalize_pop_log($popularity, $pop_max, $smoothing_factor=2.0, $base=
  */
 function _apachesolr_popularity_send_to_solr() {
   
-  // writes popularity from db to disk and copies it to Solr data dir
+  // Write popularity from db to disk and copies it to Solr data dir
   _apachesolr_popularity_send_data_to_solr(_apachesolr_popularity_db_popularity_to_string()); 
   
-  // reloads Solr cache
+  // Get default Solr environment ID
   $default_env_id = variable_get('apachesolr_default_environment', 'solr');
+  // Get URL of the default Solr server
   $default_env_url = db_query('SELECT url FROM {apachesolr_environment} WHERE env_id = :env_id', array(':env_id' => $default_env_id))->fetchField();
+  // Reload Solr cache
   $xml = file_get_contents($default_env_url . '/reloadCache');
   
   /* OPTIONAL: check $xml to see if the status was good
    * 
-   * Result should look something like this:
+   * Result should look something like this if the reload was successful (although does not show if if the data was added successfully):
    * 
    * <?xml version="1.0" encoding="UTF-8"?>
    * <response>
@@ -314,40 +310,41 @@ function _apachesolr_popularity_send_to_solr() {
  */
 function _apachesolr_popularity_db_popularity_to_string() {
   
-  // gets popularity coefficient
+  // Get popularity coefficient
   $pop_coefficient = (float) variable_get('apachesolr_popularity_influence', 2.0);
   
-  // gets low popularity influence  
+  // Get low popularity influence  
   $low_pop_influence = (float) variable_get('apachesolr_popularity_low_pop_influence', 1.0);
   
-  // gets type of popularity compression
+  // Get type of popularity compression
   $compression = variable_get('apachesolr_popularity_compression', 'N');
   
   // Set tracking flags. Aka nodes NOT to track
   $flag = _apachesolr_popularity_get_tracking_flags();
   
-  // queries the popularity values  
+  // Query the popularity values  
   $query = db_query("SELECT nid, popularity FROM {apachesolr_popularity_counter} WHERE flag & :flag = 0", array(':flag' => $flag));
 
-  // gets the maximum value
+  // Get the maximum value
   $pop_max = db_query("SELECT MAX(popularity) FROM {apachesolr_popularity_counter} WHERE flag & :flag = 0", array(':flag' => $flag))->fetchField();
   
-  // holds the popularity values in a string for solr
+  // Hold the popularity values in a string for solr
   $popularity_string = '';
   
-  // writes the popularity
+  // Write the popularity
   foreach ($query as $record) {
    
     // Deterime compression type for popularity normalion and calculate popularity_ranking_score
-    if ($compression == 'S') {
+    if ($compression == 'S') {  // Square root normalization
       $popularity_ranking_score = $low_pop_influence + $pop_coefficient * _normalize_pop_root($record->popularity, $pop_max);
     }
-    else if ($compression == 'L') {
+    else if ($compression == 'L') {  // Logrithmic normalization
       $popularity_ranking_score = $low_pop_influence + $pop_coefficient * _normalize_pop_log($record->popularity, $pop_max);      
     }
-    else {
+    else {   // Basic linear normalization
       $popularity_ranking_score = $low_pop_influence + $pop_coefficient * _normalize_pop_linear($record->popularity, $pop_max);
     }
+    // Write sting in a form that Solr will understand via use of external file field
     $popularity_string .= apachesolr_site_hash() . "/node/" . $record->nid . "=" . $popularity_ranking_score . "\n";      
   }
   
@@ -360,16 +357,17 @@ function _apachesolr_popularity_db_popularity_to_string() {
  */
 function _apachesolr_popularity_send_data_to_solr($data) {
   
-  // TODO: create interface to set $solr_data_dir
-  //$solr_data_dir = "/opt/tomcat/solr/data/";  // get variable instead
+  // Get Solr data directory
   $solr_data_dir = variable_get('apachesolr_popularity_solr_data_dir', '');
   
   if ($solr_data_dir != '') {
+    // Name of the file containing the popularity data
     $filename = 'external_eff_popularity';
+    // Construct a URI to the location of the file
     $destination = file_build_uri($filename);
-
+    // Write file to disk
     file_save_data($data, $destination, $replace=1);
-
+    // Copy file to Solr data directory
     copy($_SERVER['DOCUMENT_ROOT'] . base_path() . "sites/default/files/" . $filename, $solr_data_dir . $filename);
   }
 }
@@ -381,22 +379,27 @@ function _apachesolr_popularity_send_data_to_solr($data) {
  * @return
  *   An HTML string with $title linked to the $path.
  */
-function _apachesolr_popularity_format_item($nid) {
-  
+function _apachesolr_popularity_format_item($nid) {  
+  // Set node path
   $path = "node/".$nid;
+  // Get title of node
   $title = db_query('SELECT title FROM {node} WHERE nid = :nid', array(':nid' => $nid))->fetchfield(0);
+  // Format node
   $title = truncate_utf8($title, 60, TRUE, TRUE, 45);
-  
+  // Create link
   $output = l($title, $path);
+  // Return formatted link
   return $output;
 }
 
 
 /**
- * Implements hook_node_insert().
+ * Implements hook_node_insert()
+ * 
+ * Run each time a node is created
  */
 function apachesolr_popularity_node_insert($node) {  
-  // begins tracking node
+  // Begin tracking node
   _apachesolr_popularity_add_node($node);
 }
 
@@ -405,9 +408,10 @@ function apachesolr_popularity_node_insert($node) {
  * Adds a node to the tracking table using the node's nid
  */
 function _apachesolr_popularity_add_node($node) {
-    // Set tracking flags. Aka nodes NOT to track
+  // Get node's flags
   $flag = _apachesolr_popularity_get_node_flags($node);
   
+  // Add node to apachesolr_popularity_counter table
   db_merge('apachesolr_popularity_counter')
       ->key(array('nid' => $node->nid))
       ->insertFields(array(
@@ -418,14 +422,14 @@ function _apachesolr_popularity_add_node($node) {
           'flag' => $flag
       ))
       ->updateFields(array(
-          'flag' => $flag
+          'flag' => $flag      // updates only the flag if the node already exists
       ))
       ->execute();
 }
 
 
 /**
- * Removes a node to the tracking table using the node's nid
+ * Removes a node from the tracking table using the node's nid
  */
 function _apachesolr_popularity_delete_node($nid) {
   db_delete('apachesolr_popularity_counter')
@@ -438,11 +442,12 @@ function _apachesolr_popularity_delete_node($nid) {
  * Gets front page nid if availalable
  */
 function _apachesolr_popularity_get_front_page_nid() {
-  // get front page nid (if available)
   $front_nid = NULL;
+  // Get URL of front page
   $front_url = variable_get('site_frontpage', 'node');
   $front_url = drupal_get_normal_path($front_url);  // in case it was an alias
   $front_url = trim($front_url, '/');
+  // Extract the node id from the URL
   $front = explode('/', $front_url);
   if( $front[0]=='node' && ctype_digit($front[1]) ) {
     $front_nid = $front[1];
@@ -454,25 +459,25 @@ function _apachesolr_popularity_get_front_page_nid() {
  * Implements hook_node_delete().
  */
 function apachesolr_popularity_node_delete($node) {
-  // clean up popularity table when node is deleted
+  // Clean up popularity table when node is deleted
   db_delete('apachesolr_popularity_counter')
     ->condition('nid', $node->nid)
     ->execute();
 }
 
-
 /**
  * Implements hook_apachesolr_query_alter().
  */
 function apachesolr_popularity_apachesolr_query_alter(DrupalSolrQueryInterface $query) {
+  // Allow node popularity ranking values to be incorporated into Solr ranking
   $query->addParam('boost', 'eff_popularity');
 }
-
 
 /**
  * Implements hook_apachesolr_confgen_solrconfig_alter().
  */
-function apachesolr_popularity_apachesolr_confgen_solrconfig_alter($qp, $solr_version) {  
+function apachesolr_popularity_apachesolr_confgen_solrconfig_alter($qp, $solr_version) {
+  // Add the reloadCache request handler.  Allows Solr to update it's popularity values
   $qp    
     ->find(':root')->xpath("requestHandler[@name='mlt']")
     ->after("\n\n  <!-- Reload Cache Request Handler -->\n  <requestHandler name=\"/reloadCache\" class=\"org.apache.solr.search.function.FileFloatSource\$ReloadCacheRequestHandler\"/>");
@@ -486,10 +491,13 @@ function apachesolr_popularity_apachesolr_confgen_solrconfig_alter($qp, $solr_ve
  */
 function apachesolr_popularity_node_update($node) {
   
+  // Get flags currently associated with the node from the popularity table
   $flag = db_query('SELECT flag FROM {apachesolr_popularity_counter} WHERE nid = :nid', array(':nid' => $node->nid))->fetchfield(0);
   
+  // Set the node published flag to match the node publish status (as just set by the user)
   setflag($flag, UNPUBLISHED, !$node->status);
   
+  // Update the flag
   db_update('apachesolr_popularity_counter')
       ->fields(array(
               'flag' => $flag
@@ -504,8 +512,8 @@ function apachesolr_popularity_node_update($node) {
  */
 function _apachesolr_popularity_get_tracking_flags() {
   $flag = 0x0;
-  if (variable_get('apachesolr_popularity_only_published')) setflag($flag, UNPUBLISHED);
-  if (variable_get('apachesolr_popularity_disable_frontpage')) setflag($flag, FRONTPAGE);
+  if (variable_get('apachesolr_popularity_only_published')) setflag($flag, UNPUBLISHED);    // Get published flag
+  if (variable_get('apachesolr_popularity_disable_frontpage')) setflag($flag, FRONTPAGE);   // Get front page flag
   return $flag;
 }
 
@@ -514,8 +522,8 @@ function _apachesolr_popularity_get_tracking_flags() {
  */
 function _apachesolr_popularity_get_node_flags($node) {
   $flag = 0x0;
-  if (!$node->status) setflag($flag, UNPUBLISHED);
-  if ($node->nid == _apachesolr_popularity_get_front_page_nid()) setflag($flag, FRONTPAGE);
+  if (!$node->status) setflag($flag, UNPUBLISHED);      // Get the node's published status
+  if ($node->nid == _apachesolr_popularity_get_front_page_nid()) setflag($flag, FRONTPAGE);   // Get whether the page is a front page
   return $flag;
 }
 
@@ -527,20 +535,24 @@ function _apachesolr_popularity_get_nid_flags($nid) {
   $node_status = db_query("SELECT status FROM {node} WHERE nid = :nid LIMIT 1", array(':nid' => $nid))->fetchField();
   // Set flags
   $flag = 0x0;
-  if (!$node_status) setflag($flag, UNPUBLISHED);
-  if ($nid == _apachesolr_popularity_get_front_page_nid()) setflag($flag, FRONTPAGE);
+  if (!$node_status) setflag($flag, UNPUBLISHED);      // Get the node's published status
+  if ($nid == _apachesolr_popularity_get_front_page_nid()) setflag($flag, FRONTPAGE);   // Get whether the page is a front page
   return $flag;
 }
 
 /**
- * Mark front page flags
+ * Mark flags of the front page
  */
 function _apachesolr_popularity_set_front_page_flags() {
+  // Get node ID of front page
   $front_nid = _apachesolr_popularity_get_front_page_nid();
   if ($front_nid) {
-    
+    // Get currently set flags of the front page
     $front_flags = _apachesolr_popularity_get_nid_flags($front_nid);
+    // Make sure the front page's front-page-flag is set
+    setflag($front_flags, FRONTPAGE);
     
+    // Update the flags of the front page
     db_merge('apachesolr_popularity_counter')
       ->key(array('nid' => $front_nid))
       ->insertFields(array(
