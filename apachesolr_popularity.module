@@ -242,11 +242,12 @@ function _calculate_gain_logistic_decay($delta_time, $total_time, $max_time) {
  * 
  *    No Compression
  */
-function _normalize_pop_linear($popularity, $pop_max) {
-  // prevents divsion of zero and reduces influence of popularity on ranking if it is very low
-  if ( $pop_max < 1.0 )  $pop_max = 1.0;
+function _normalize_pop_linear($popularity, $pop_max, $pop_min) {
+  // prevents divsion of zero and reduces influence of popularity on ranking if it is very low or very similar
+  $pop_norm = $pop_max - $pop_min;
+  if ( $pop_norm < 1.0 ) $pop_norm = 1.0;
     
-  return $popularity / $pop_max;
+  return ($popularity - $pop_min) / $pop_norm;
 }
 
 /**
@@ -254,11 +255,12 @@ function _normalize_pop_linear($popularity, $pop_max) {
  * 
  *    Moderate Compression
  */
-function _normalize_pop_root($popularity, $pop_max) {
-  // prevents divsion of zero and reduces influence of popularity on ranking if it is very low
-  if ( $pop_max < 1.0 )  $pop_max = 1.0;
+function _normalize_pop_root($popularity, $pop_max, $pop_min) {
+  // prevents divsion of zero and reduces influence of popularity on ranking if it is very low or very similar
+  $pop_norm = $pop_max - $pop_min;
+  if ( $pop_norm < 1.0 ) $pop_norm = 1.0;
   
-  return sqrt($popularity / $pop_max);
+  return sqrt(($popularity - $pop_min) / $pop_norm);
 }
 
 /**
@@ -266,11 +268,12 @@ function _normalize_pop_root($popularity, $pop_max) {
  * 
  *    High compression
  */
-function _normalize_pop_log($popularity, $pop_max, $smoothing_factor=2.0, $base=2.0) {
-  // prevents divsion of zero and reduces influence of popularity on ranking if it is very low
-  if ( $pop_max < 1.0 )  $pop_max = 1.0;
+function _normalize_pop_log($popularity, $pop_max, $pop_min, $smoothing_factor=1.0, $base=2.0) {
+  // prevents divsion of zero and reduces influence of popularity on ranking if it is very low or very similar
+  $pop_norm = $pop_max - $pop_min;
+  if ( $pop_norm < 1.0 ) $pop_norm = 1.0;
   
-  return (log($smoothing_factor + $popularity, $base) / log($smoothing_factor + $pop_max, $base));
+  return (log($smoothing_factor + ($popularity - $pop_min), $base) / log($smoothing_factor + $pop_norm, $base));
 }
 
 
@@ -324,6 +327,9 @@ function _apachesolr_popularity_update_ranking_modifier() {
   // Get the maximum value
   $pop_max = db_query("SELECT MAX(popularity) FROM {apachesolr_popularity_counter} WHERE flag & :flag = 0", array(':flag' => $flag))->fetchField();
   
+  // Get the minimum value
+  $pop_min = db_query("SELECT MIN(popularity) FROM {apachesolr_popularity_counter} WHERE flag & :flag = 0", array(':flag' => $flag))->fetchField();
+  
   // Query the popularity values  
   $query = db_query("SELECT nid, popularity FROM {apachesolr_popularity_counter} WHERE flag & :flag = 0", array(':flag' => $flag));
     
@@ -332,13 +338,13 @@ function _apachesolr_popularity_update_ranking_modifier() {
    
     // Deterime compression type for popularity normalion and calculate popularity_ranking_score
     if ($compression == 'S') {        // Square root normalization
-      $popularity_ranking_score = $low_pop_influence + $pop_coefficient * _normalize_pop_root($node->popularity, $pop_max);
+      $popularity_ranking_score = $low_pop_influence + $pop_coefficient * _normalize_pop_root($node->popularity, $pop_max, $pop_min);
     }
     else if ($compression == 'L') {   // Logrithmic normalization
-      $popularity_ranking_score = $low_pop_influence + $pop_coefficient * _normalize_pop_log($node->popularity, $pop_max);      
+      $popularity_ranking_score = $low_pop_influence + $pop_coefficient * _normalize_pop_log($node->popularity, $pop_max, $pop_min);      
     }
     else {                            // Basic linear normalization
-      $popularity_ranking_score = $low_pop_influence + $pop_coefficient * _normalize_pop_linear($node->popularity, $pop_max);
+      $popularity_ranking_score = $low_pop_influence + $pop_coefficient * _normalize_pop_linear($node->popularity, $pop_max, $pop_min);
     }
     // Update ranking modifier
     db_update('apachesolr_popularity_counter')
