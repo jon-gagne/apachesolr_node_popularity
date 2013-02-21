@@ -54,7 +54,7 @@ function apachesolr_popularity_exit() {
   drupal_bootstrap(DRUPAL_BOOTSTRAP_VARIABLES);
   
   // If popularity tracking is enabled
-  if (variable_get('apachesolr_popularity_popularity_tracker', 0)) {
+  if (variable_get('apachesolr_popularity_enable_tracker', 0)) {
     // We are counting content views.
     if (arg(0) == 'node' && is_numeric(arg(1)) && arg(2) == NULL) {
       // Get node id from the URL
@@ -65,6 +65,8 @@ function apachesolr_popularity_exit() {
       $node_flags = _apachesolr_popularity_get_nid_flags($nid);
       // Only update nodes that should be tracked
       if (!($tracking_flags & $node_flags)) {
+        // Increment epoch count total
+        variable_set('apachesolr_popularity_count_total', variable_get('apachesolr_popularity_count_total', 0) + 1);
         // Update the node's counters.
         db_merge('apachesolr_popularity_counter')
           ->key(array('nid' => $nid))
@@ -121,12 +123,16 @@ function apachesolr_popularity_menu() {
  * Updates node popularity and sends to solr.
  */
 function apachesolr_popularity_cron() {
-     
-  // Updates node popularity
-  _apachesolr_popularity_update_popularity();
   
-  // writes data to disk and sends to solr
-  _apachesolr_popularity_send_to_solr();  
+  // Don't bother updating if there was no browsing activity
+  if (variable_get('apachesolr_popularity_count_total', 0)) {
+    
+    // Updates node popularity
+    _apachesolr_popularity_update_popularity();
+
+    // writes data to disk and sends to solr
+    _apachesolr_popularity_send_to_solr();  
+  }
 }
 
 
@@ -134,6 +140,13 @@ function apachesolr_popularity_cron() {
  * Updates node popularity
  */
 function _apachesolr_popularity_update_popularity() {
+  
+  // Get total count since last update
+  $total_count = variable_get('apachesolr_popularity_count_total', 0);
+  // Don't update if there was no activity
+  if (!$total_count) return;
+  // Clear count total
+  variable_set('apachesolr_popularity_count_total', 0);
   
   // Get timestamp of last popularity update
   $apachesolr_popularity_timestamp = variable_get('apachesolr_popularity_day_timestamp', '');
@@ -143,7 +156,7 @@ function _apachesolr_popularity_update_popularity() {
   // Get the forgetting window
   $forgetting_window = (float) variable_get('apachesolr_popularity_forgetting_window', 5.0);
   // Get initial damping
-  $init_damping = (float) variable_get('apachesolr_popularity_init_damping', 0.2);
+  //$init_damping = (float) variable_get('apachesolr_popularity_init_damping', 0.2);
   
   // TODO: get current time stamp to determine $elapsed time
   $elapsed_time = 0.2;
@@ -164,7 +177,7 @@ function _apachesolr_popularity_update_popularity() {
   db_update('apachesolr_popularity_counter')
       ->fields(array(
               'recentcount' => 0,
-              'daystracked' => 0,
+              'trackedcount' => 0,
               )
       )
       ->condition('flag', $flag, '&')
@@ -186,11 +199,11 @@ function _apachesolr_popularity_update_popularity() {
   // Calculates popularity
   foreach ($query as $record) {
     // Total time tracked
-    $total_time = $record->daystracked + $elapsed_time;
+    $node_total_count = $record->trackedcount + $total_count;
     
     // Calculate popularity
     $popularity = ($record->popularity
-                   + (_calculate_gain_logistic_decay($elapsed_time, $total_time+$init_damping, $forgetting_window) 
+                   + (_calculate_gain_logistic_decay($total_count, $node_total_count /* +$init_damping */, $forgetting_window) 
                       * 
                       ( ($record->recentcount * $recentcount_normalization) - $record->popularity )
                      )
@@ -201,7 +214,7 @@ function _apachesolr_popularity_update_popularity() {
       ->fields(array(
               'popularity' => $popularity,
               'recentcount' => 0,
-              'daystracked' => $total_time,
+              'trackedcount' => $node_total_count,
               )
       )
       ->condition('nid', $record->nid)
@@ -213,26 +226,26 @@ function _apachesolr_popularity_update_popularity() {
 /**
  * Gain function - Iterative mean
  *
- * Manditory parameter conditions:  $total_time > 0.0 AND $delta_time <= $total_time 
+ * Manditory parameter conditions:  $total_count > 0.0 AND $delta_count <= $total_count 
  *  
  * Returns value between [0, 1]
  */
-function _calculate_gain_mean($delta_time, $total_time) {
+function _calculate_gain_mean($delta_count, $total_count) {
     
-  return $delta_time/$total_time;
+  return $delta_count/$total_count;
 }
 
 /**
  * Gain function - Logistic decay
  * 
- * Manditory paramater conditions:  $max_time > 0.0 AND $total_time > 0.0 AND $delta_time <= $total_time 
+ * Manditory paramater conditions:  $max_count > 0.0 AND $total_count > 0.0 AND $delta_count <= $total_count 
  * 
  * Returns value between [0, 1]
  */
-function _calculate_gain_logistic_decay($delta_time, $total_time, $max_time) {
+function _calculate_gain_logistic_decay($delta_count, $total_count, $max_count) {
   
-  $exp_delta = exp(-2.0*$delta_time/$max_time);
-  $exp_total = exp(-2.0*$total_time/$max_time);
+  $exp_delta = exp(-2.0*$delta_count/$max_count);
+  $exp_total = exp(-2.0*$total_count/$max_count);
   return ( (1 - $exp_delta)/(1 + $exp_delta) ) * ( (1 + $exp_total)/(1 - $exp_total) ) ;
 }
 
@@ -412,11 +425,16 @@ function _apachesolr_popularity_format_item($nid) {
   // Set node path
   $path = "node/".$nid;
   // Get title of node
-  $title = db_query('SELECT title FROM {node} WHERE nid = :nid', array(':nid' => $nid))->fetchfield(0);
+  $result = db_query('SELECT title, language FROM {node} WHERE nid = :nid', array(':nid' => $nid));
+  $node = $result->fetchObject();
   // Format node
-  $title = truncate_utf8($title, 60, TRUE, TRUE, 45);
+  $title = truncate_utf8($node->title, 60, TRUE, TRUE, 45);
   // Create link
-  $output = l($title, $path);
+  $languages = language_list();
+  if (isset($languages[$node->language])) 
+    $output = l($title, $path, array('language' => $languages[$node->language]));
+  else
+    $output = l($title, $path);
   // Return formatted link
   return $output;
 }
@@ -447,7 +465,7 @@ function _apachesolr_popularity_add_node($node) {
           'nid' => $nid,
           'recentcount' => 0,
           'popularity' => (float) variable_get('apachesolr_popularity_init_popularity', 20.0),
-          'daystracked' => 0.0,
+          'trackedcount' => 0.0,
           'flag' => $flag
       ))
       ->updateFields(array(
@@ -588,7 +606,7 @@ function _apachesolr_popularity_set_front_page_flags() {
           'nid' => $front_nid,
           'recentcount' => 0,
           'popularity' => (float) variable_get('apachesolr_popularity_init_popularity', 20.0),
-          'daystracked' => 0.0,
+          'trackedcount' => 0.0,
           'flag' => $front_flags
       ))
       ->updateFields(array(

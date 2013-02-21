@@ -26,8 +26,8 @@ function apachesolr_popularity_top_pages() {
     array('data' => t('Popularity'), 'field' => 'popularity', 'sort' => 'desc'),
     array('data' => t('Ranking Modifier'), 'field' => 'rankingmodifier'),
     array('data' => t('Recent Count'), 'field' => 'recentcount', 'sort' => 'desc'),
-    array('data' => t('Days Tracked'), 'field' => 'daystracked'),
-    array('data' => t('Tracking flag'), 'field' => 'flag'),
+    array('data' => t('Counter Timer'), 'field' => 'trackedcount'),
+    array('data' => t('Tracking Flag'), 'field' => 'flag'),
   );
     
   // Set tracking flags. Aka nodes NOT to track
@@ -35,7 +35,7 @@ function apachesolr_popularity_top_pages() {
   
   // Queries the popularity data from databases
   $query = db_select('apachesolr_popularity_counter', 'p', array('target' => 'slave'))->extend('PagerDefault')->extend('TableSort');
-  $query->fields('p', array('nid', 'popularity', 'rankingmodifier', 'recentcount', 'daystracked', 'flag'));
+  $query->fields('p', array('nid', 'popularity', 'rankingmodifier', 'recentcount', 'trackedcount', 'flag'));
   $query       
     ->groupBy('nid')
     ->where('flag & :flag = 0', array(':flag' => $flag))           
@@ -48,7 +48,7 @@ function apachesolr_popularity_top_pages() {
   $rows = array();
   // Builds table data
   foreach ($result as $page) {
-    $rows[] = array(_apachesolr_popularity_format_item($page->nid), round($page->popularity, 1), round($page->rankingmodifier, 2), $page->recentcount, round($page->daystracked,2), $page->flag);
+    $rows[] = array(_apachesolr_popularity_format_item($page->nid), round($page->popularity, 1), round($page->rankingmodifier, 2), $page->recentcount, $page->trackedcount, $page->flag);
   }
   
   $build['popularity_top_pages_table'] = array(
@@ -84,10 +84,10 @@ function apachesolr_popularity_settings_form() {
     '#title' => t('Solr Settings'),
     '#description' => $solr_description,
   );
-  $form['solr_settings']['apachesolr_popularity_popularity_tracker'] = array(
+  $form['solr_settings']['apachesolr_popularity_enable_tracker'] = array(
     '#type' => 'checkbox',
     '#title' => t('Enable Apache Solr Node Popularity'),
-    '#default_value' => variable_get('apachesolr_popularity_popularity_tracker', 0),
+    '#default_value' => variable_get('apachesolr_popularity_enable_tracker', 0),
     '#description' => t('Track node viewing and calculate a popularity metric based on view frequency.'),
   );           
   $form['solr_settings']['apachesolr_popularity_solr_data_dir'] = array(
@@ -112,7 +112,7 @@ function apachesolr_popularity_settings_form() {
       '#description' => t("Amount that node popularity influences Apache Solr's ranking scores.<br>Ranking scores will be increase up to this amount."),
       '#states' => array(
         'enabled' => array(
-          ':input[name="apachesolr_popularity_popularity_tracker"]' => array('checked' => TRUE),
+          ':input[name="apachesolr_popularity_enable_tracker"]' => array('checked' => TRUE),
           ':input[name="apachesolr_popularity_solr_data_dir"]' => array('empty' => FALSE)
         ),
       ),
@@ -126,7 +126,7 @@ function apachesolr_popularity_settings_form() {
       '#description' => t('After this many days of tracking, biasing recent popularity begins to fade on. <br> The lower the value is, the more that newer popularity measurements are biased.'),
       '#states' => array(
         'enabled' => array(
-          ':input[name="apachesolr_popularity_popularity_tracker"]' => array('checked' => TRUE),
+          ':input[name="apachesolr_popularity_enable_tracker"]' => array('checked' => TRUE),
           ':input[name="apachesolr_popularity_solr_data_dir"]' => array('empty' => FALSE)
         ),
       ),
@@ -139,7 +139,7 @@ function apachesolr_popularity_settings_form() {
     '#default_value' => variable_get('apachesolr_popularity_only_published', TRUE),
     '#states' => array(
       'enabled' => array(
-        ':input[name="apachesolr_popularity_popularity_tracker"]' => array('checked' => TRUE),
+        ':input[name="apachesolr_popularity_enable_tracker"]' => array('checked' => TRUE),
         ':input[name="apachesolr_popularity_solr_data_dir"]' => array('empty' => FALSE)
       ),
     ),  
@@ -152,7 +152,7 @@ function apachesolr_popularity_settings_form() {
     '#default_value' => variable_get('apachesolr_popularity_disable_frontpage', TRUE),
     '#states' => array(
       'enabled' => array(
-        ':input[name="apachesolr_popularity_popularity_tracker"]' => array('checked' => TRUE),
+        ':input[name="apachesolr_popularity_enable_tracker"]' => array('checked' => TRUE),
         ':input[name="apachesolr_popularity_solr_data_dir"]' => array('empty' => FALSE)
       ),
     ),  
@@ -168,7 +168,7 @@ function apachesolr_popularity_settings_form() {
     '#default_value' => FALSE, 
     '#states' => array(
         'enabled' => array(
-          ':input[name="apachesolr_popularity_popularity_tracker"]' => array('checked' => TRUE),
+          ':input[name="apachesolr_popularity_enable_tracker"]' => array('checked' => TRUE),
           ':input[name="apachesolr_popularity_solr_data_dir"]' => array('empty' => FALSE)
         ),
       ),
@@ -210,16 +210,18 @@ function apachesolr_popularity_settings_form_validate($form, &$form_state) {
     form_set_error('confirm_reset', t('Please confirm reset!'));
   }
   
+  // Trim spaces
+  $dir = trim($form_state['values']['apachesolr_popularity_solr_data_dir']);
+  // Add slash if not present
+  if ( $dir[strlen($dir)-1] != '\\' AND $dir[strlen($dir)-1] != '/' )
+    $dir .= DIRECTORY_SEPARATOR;
+  // Reset cleaned data directory 
+  $form_state['values']['apachesolr_popularity_solr_data_dir'] = $dir;
   // Verifies that the Solr data directory exists and is writable
-  $dir = $form_state['values']['apachesolr_popularity_solr_data_dir'];
   if ( $dir != '' ) {
     if ( !file_exists($dir) ) form_set_error('apachesolr_popularity_solr_data_dir', t('Directory does not exist'));
 
-    if ( !is_writable($dir) ) form_set_error('apachesolr_popularity_solr_data_dir', t('Directory does is not writable'));
-
-    // Adds slash if not present
-    if ( $dir[strlen($dir)-1] != '\\' AND $dir[strlen($dir)-1] != '/' )
-      $form_state['values']['apachesolr_popularity_solr_data_dir'] .= DIRECTORY_SEPARATOR; 
+    if ( !is_writable($dir) ) form_set_error('apachesolr_popularity_solr_data_dir', t('Directory does is not writable'));     
   }
 }
 
@@ -232,7 +234,7 @@ function apachesolr_popularity_settings_form_submit($form, &$form_state) {
   $send_to_solr = false;
   
   // Sets up popularity tracking table
-  if ( ($form_state['values']['apachesolr_popularity_popularity_tracker']==1) AND (variable_get('apachesolr_popularity_popularity_tracker')==0) ) {
+  if ( ($form_state['values']['apachesolr_popularity_enable_tracker']==1) AND (variable_get('apachesolr_popularity_enable_tracker')==0) ) {
     _track_new_nodes();
     $send_to_solr = true;
   }
@@ -294,7 +296,7 @@ function apachesolr_popularity_advanced_form() {
     '#type' => 'fieldset',
     '#title' => t('Advanced Popularity Settings'),
   );  
-  if ( variable_get('apachesolr_popularity_popularity_tracker')==1 ) {
+  if ( variable_get('apachesolr_popularity_enable_tracker')==1 ) {
     $form['settings']['apachesolr_popularity_enable_advanced'] = array(
       '#type' => 'checkbox',
       '#title' => t('Enables advanced settings'),
@@ -316,7 +318,7 @@ function apachesolr_popularity_advanced_form() {
   $init_damping_options = array( '0' => '0.0', '0.05' => '0.05', '0.2' => '0.2', '0.5' => '0.5', '1' => '1', '2' => '2', '5' => '5' );
   $form['settings']['apachesolr_popularity_init_damping'] = array(
       '#type' => 'select',
-      '#title' => t('Initial dampening'),
+      '#title' => t('Initial dampening (DISABLED)'),
       '#default_value' => (string) variable_get('apachesolr_popularity_init_damping', '0.2'),
       '#options' => $init_damping_options,
       '#description' => t("Smoothes initial popularity estimates.<br> 0 = None, 0.2 = Moderate, 2 = High."),
@@ -460,14 +462,16 @@ function _track_new_nodes() {
  * Resets node popularities
  */
 function _reset_popularity() {
-  // Gets initial popularity
+  // Clear count total
+  variable_set('apachesolr_popularity_count_total', 0);
+  // Get initial popularity
   $popularity = (float) variable_get('apachesolr_popularity_init_popularity', 20.0);
-  // Resets all nodes
+  // Reset all nodes
   db_update('apachesolr_popularity_counter')
         ->fields(array(
                 'popularity' => $popularity,
                 'recentcount' => 0,
-                'daystracked' => 0.0,
+                'trackedcount' => 0.0,
                 )
         )
         ->execute();    
