@@ -84,10 +84,10 @@ function apachesolr_popularity_settings_form() {
     '#title' => t('Solr Settings'),
     '#description' => $solr_description,
   );
-  $form['solr_settings']['popularity_tracker'] = array(
+  $form['solr_settings']['apachesolr_popularity_popularity_tracker'] = array(
     '#type' => 'checkbox',
     '#title' => t('Enable Apache Solr Node Popularity'),
-    '#default_value' => variable_get('popularity_tracker', 0),
+    '#default_value' => variable_get('apachesolr_popularity_popularity_tracker', 0),
     '#description' => t('Track node viewing and calculate a popularity metric based on view frequency.'),
   );           
   $form['solr_settings']['apachesolr_popularity_solr_data_dir'] = array(
@@ -112,7 +112,7 @@ function apachesolr_popularity_settings_form() {
       '#description' => t("Amount that node popularity influences Apache Solr's ranking scores.<br>Ranking scores will be increase up to this amount."),
       '#states' => array(
         'enabled' => array(
-          ':input[name="popularity_tracker"]' => array('checked' => TRUE),
+          ':input[name="apachesolr_popularity_popularity_tracker"]' => array('checked' => TRUE),
           ':input[name="apachesolr_popularity_solr_data_dir"]' => array('empty' => FALSE)
         ),
       ),
@@ -126,7 +126,7 @@ function apachesolr_popularity_settings_form() {
       '#description' => t('After this many days of tracking, biasing recent popularity begins to fade on. <br> The lower the value is, the more that newer popularity measurements are biased.'),
       '#states' => array(
         'enabled' => array(
-          ':input[name="popularity_tracker"]' => array('checked' => TRUE),
+          ':input[name="apachesolr_popularity_popularity_tracker"]' => array('checked' => TRUE),
           ':input[name="apachesolr_popularity_solr_data_dir"]' => array('empty' => FALSE)
         ),
       ),
@@ -138,7 +138,7 @@ function apachesolr_popularity_settings_form() {
     '#description' => t('Pages may receve a number of hits during creation, which may not relect the popularity of the node at query time.\nNote: a page is considered published if the page\'s publish field is checked'),
     '#states' => array(
       'enabled' => array(
-        ':input[name="popularity_tracker"]' => array('checked' => TRUE),
+        ':input[name="apachesolr_popularity_popularity_tracker"]' => array('checked' => TRUE),
         ':input[name="apachesolr_popularity_solr_data_dir"]' => array('empty' => FALSE)
       ),
     ),  
@@ -150,7 +150,7 @@ function apachesolr_popularity_settings_form() {
     '#description' => t('Due to the high number of views of most front pages, disabling popularity tracking of it will generally improve search result.'),
     '#states' => array(
       'enabled' => array(
-        ':input[name="popularity_tracker"]' => array('checked' => TRUE),
+        ':input[name="apachesolr_popularity_popularity_tracker"]' => array('checked' => TRUE),
         ':input[name="apachesolr_popularity_solr_data_dir"]' => array('empty' => FALSE)
       ),
     ),  
@@ -166,7 +166,7 @@ function apachesolr_popularity_settings_form() {
     '#default_value' => FALSE, 
     '#states' => array(
         'enabled' => array(
-          ':input[name="popularity_tracker"]' => array('checked' => TRUE),
+          ':input[name="apachesolr_popularity_popularity_tracker"]' => array('checked' => TRUE),
           ':input[name="apachesolr_popularity_solr_data_dir"]' => array('empty' => FALSE)
         ),
       ),
@@ -230,7 +230,7 @@ function apachesolr_popularity_settings_form_submit($form, &$form_state) {
   $send_to_solr = false;
   
   // Sets up popularity tracking table
-  if ( ($form_state['values']['popularity_tracker']==1) AND (variable_get('popularity_tracker')==0) ) {
+  if ( ($form_state['values']['apachesolr_popularity_popularity_tracker']==1) AND (variable_get('apachesolr_popularity_popularity_tracker')==0) ) {
     _track_new_nodes();
     $send_to_solr = true;
   }
@@ -292,7 +292,7 @@ function apachesolr_popularity_advanced_form() {
     '#type' => 'fieldset',
     '#title' => t('Advanced Popularity Settings'),
   );  
-  if ( variable_get('popularity_tracker')==1 ) {
+  if ( variable_get('apachesolr_popularity_popularity_tracker')==1 ) {
     $form['settings']['apachesolr_popularity_enable_advanced'] = array(
       '#type' => 'checkbox',
       '#title' => t('Enables advanced settings'),
@@ -424,7 +424,7 @@ function _track_new_nodes() {
   
   // Find nodes that are in Drupal's node table that aren't in the apachesolr_popularity_counter table
   $node_create_list = db_query(
-            'SELECT n.nid n.status
+            'SELECT n.nid, n.status
              FROM {node} AS n
              LEFT JOIN {apachesolr_popularity_counter} AS apc
              ON n.nid=apc.nid
@@ -437,7 +437,7 @@ function _track_new_nodes() {
   $frontpage_nid = _apachesolr_popularity_get_front_page_nid();
   
   // Add nodes
-  $query = db_insert('apachesolr_popularity_counter')->fields(array('nid'));  
+  $query = db_insert('apachesolr_popularity_counter')->fields(array('nid', 'popularity', 'flag'));  
   foreach ($node_create_list as $node) {
     // Set node flags
     $flag = 0x0;

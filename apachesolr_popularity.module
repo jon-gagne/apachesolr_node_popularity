@@ -54,7 +54,7 @@ function apachesolr_popularity_exit() {
   drupal_bootstrap(DRUPAL_BOOTSTRAP_VARIABLES);
   
   // If popularity tracking is enabled
-  if (variable_get('popularity_tracker', 0)) {
+  if (variable_get('apachesolr_popularity_popularity_tracker', 0)) {
     // We are counting content views.
     if (arg(0) == 'node' && is_numeric(arg(1)) && arg(2) == NULL) {
       // Get node id from the URL
