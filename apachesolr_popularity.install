@@ -94,7 +94,7 @@ function apachesolr_popularity_schema() {
         'default' => 0.0,
         'size' => 'medium',
       ),
-      'rankingmodifier' => array(
+      'rankingmultiplier' => array(
         'description' => 'The Solr ranking modifier.',
         'type' => 'float',
         'unsigned' => TRUE,

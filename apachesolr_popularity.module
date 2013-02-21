@@ -362,7 +362,7 @@ function _apachesolr_popularity_update_ranking_modifier() {
     // Update ranking modifier
     db_update('apachesolr_popularity_counter')
         ->fields(array(
-                'rankingmodifier' => $popularity_ranking_score
+                'rankingmultiplier' => $popularity_ranking_score
                 )
         )
         ->condition('nid', $node->nid)
@@ -371,7 +371,7 @@ function _apachesolr_popularity_update_ranking_modifier() {
   
   // Set ranking modifier to 1.0 for all nodes not tracking  
   db_update('apachesolr_popularity_counter')
-      ->fields(array('rankingmodifier' => 1.0))
+      ->fields(array('rankingmultiplier' => 1.0))
         ->where('flag & :flag', array(':flag' => $flag))  
         ->execute();
 }
@@ -387,7 +387,7 @@ function _apachesolr_popularity_send_data_to_solr() {
   $flag = _apachesolr_popularity_get_tracking_flags();
   
   // Query the popularity values  
-  $query = db_query("SELECT nid, rankingmodifier FROM {apachesolr_popularity_counter} WHERE flag & :flag = 0", array(':flag' => $flag));
+  $query = db_query("SELECT nid, rankingmultiplier FROM {apachesolr_popularity_counter} WHERE flag & :flag = 0", array(':flag' => $flag));
 
   // Hold the popularity values in a string for solr
   $popularity_string = '';
@@ -395,7 +395,7 @@ function _apachesolr_popularity_send_data_to_solr() {
   // Write the popularity
   foreach ($query as $node) {
     // Write sting in a form that Solr will understand via use of external file field
-    $popularity_string .= apachesolr_site_hash() . "/node/" . $node->nid . "=" . $node->rankingmodifier . "\n";      
+    $popularity_string .= apachesolr_site_hash() . "/node/" . $node->nid . "=" . $node->rankingmultiplier . "\n";      
   }
   
   // ============== write string to disk & send to Solr ==================

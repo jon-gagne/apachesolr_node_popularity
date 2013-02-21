@@ -22,8 +22,8 @@ function apachesolr_popularity_top_pages() {
   // Used for creating and ordering the table
   $header = array(
     array('data' => t('Title')),  // Note, cannot order by this
-    array('data' => t('Popularity'), 'field' => 'popularity', 'sort' => 'desc'),
-    array('data' => t('Ranking Modifier'), 'field' => 'rankingmodifier'),
+    array('data' => t('Ranking Multiplier'), 'field' => 'rankingmultiplier', 'sort' => 'desc'),
+    array('data' => t('Popularity'), 'field' => 'popularity'),
     array('data' => t('Recent Count'), 'field' => 'recentcount', 'sort' => 'desc'),
     array('data' => t('Counter Timer'), 'field' => 'trackedcount'),
     array('data' => t('Tracking Flag'), 'field' => 'flag'),
@@ -34,20 +34,20 @@ function apachesolr_popularity_top_pages() {
   
   // Queries the popularity data from databases
   $query = db_select('apachesolr_popularity_counter', 'p', array('target' => 'slave'))->extend('PagerDefault')->extend('TableSort');
-  $query->fields('p', array('nid', 'popularity', 'rankingmodifier', 'recentcount', 'trackedcount', 'flag'));
+  $query->fields('p', array('nid', 'popularity', 'rankingmultiplier', 'recentcount', 'trackedcount', 'flag'));
   $query       
     ->groupBy('nid')
     ->where('flag & :flag = 0', array(':flag' => $flag))           
     ->limit(30)
     ->orderByHeader($header)
-    ->orderBy('popularity', 'desc')
+    ->orderBy('rankingmultiplier', 'desc')
     ->orderBy('recentcount', 'desc');
   
   $result = $query->execute();
   $rows = array();
   // Builds table data
   foreach ($result as $page) {
-    $rows[] = array(_apachesolr_popularity_format_item($page->nid), round($page->popularity, 1), round($page->rankingmodifier, 2), $page->recentcount, $page->trackedcount, $page->flag);
+    $rows[] = array(_apachesolr_popularity_format_item($page->nid), round($page->rankingmultiplier, 2), round($page->popularity, 1), $page->recentcount, $page->trackedcount, $page->flag);
   }
   
   $build['popularity_top_pages_table'] = array(
