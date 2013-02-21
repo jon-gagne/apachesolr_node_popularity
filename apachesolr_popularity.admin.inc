@@ -24,6 +24,7 @@ function apachesolr_popularity_top_pages() {
     array('data' => t('Title'), 'field' => 'nid'),  // Note, cannot order by this
     //array('data' => t('Node ID'), 'field' => 'nid'),
     array('data' => t('Popularity'), 'field' => 'popularity', 'sort' => 'desc'),
+    array('data' => t('Ranking Modifier'), 'field' => 'rankingmodifier'),
     array('data' => t('Recent Count'), 'field' => 'recentcount', 'sort' => 'desc'),
     array('data' => t('Days Tracked'), 'field' => 'daystracked'),
     array('data' => t('Tracking flag'), 'field' => 'flag'),
@@ -34,7 +35,7 @@ function apachesolr_popularity_top_pages() {
   
   // Queries the popularity data from databases
   $query = db_select('apachesolr_popularity_counter', 'p', array('target' => 'slave'))->extend('PagerDefault')->extend('TableSort');
-  $query->fields('p', array('nid', 'popularity', 'recentcount', 'daystracked', 'flag'));
+  $query->fields('p', array('nid', 'popularity', 'rankingmodifier', 'recentcount', 'daystracked', 'flag'));
   $query       
     ->groupBy('nid')
     ->where('flag & :flag = 0', array(':flag' => $flag))           
@@ -47,10 +48,9 @@ function apachesolr_popularity_top_pages() {
   $rows = array();
   // Builds table data
   foreach ($result as $page) {
-    $rows[] = array(_apachesolr_popularity_format_item($page->nid), $page->popularity, $page->recentcount, $page->daystracked, $page->flag);
+    $rows[] = array(_apachesolr_popularity_format_item($page->nid), $page->popularity, $page->rankingmodifier, $page->recentcount, $page->daystracked, $page->flag);
   }
   
-  drupal_set_title(t('Most popular pages'), PASS_THROUGH);
   $build['popularity_top_pages_table'] = array(
     '#theme' => 'table',
     '#header' => $header,
