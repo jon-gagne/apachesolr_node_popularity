@@ -126,8 +126,7 @@ function apachesolr_popularity_cron() {
   _apachesolr_popularity_update_popularity();
   
   // writes data to disk and sends to solr
-  _apachesolr_popularity_send_to_solr();
-  
+  _apachesolr_popularity_send_to_solr();  
 }
 
 
@@ -145,9 +144,6 @@ function _apachesolr_popularity_update_popularity() {
   $forgetting_window = (float) variable_get('apachesolr_popularity_forgetting_window', 5.0);
   // Get initial damping
   $init_damping = (float) variable_get('apachesolr_popularity_init_damping', 0.2);
-    
-  // hold the popularity for each node
-  $popularity_data = array();
   
   // TODO: get current time stamp to determine $elapsed time
   $elapsed_time = 0.2;
@@ -283,8 +279,11 @@ function _normalize_pop_log($popularity, $pop_max, $smoothing_factor=2.0, $base=
  */
 function _apachesolr_popularity_send_to_solr() {
   
+  // Updates ranking modifiers before sending
+  _apachesolr_popularity_update_ranking_modifier();
+  
   // Write popularity from db to disk and copies it to Solr data dir
-  _apachesolr_popularity_send_data_to_solr(_apachesolr_popularity_db_popularity_to_string()); 
+  _apachesolr_popularity_send_data_to_solr(); 
   
   // Get default Solr environment ID
   $default_env_id = variable_get('apachesolr_default_environment', 'solr');
@@ -308,6 +307,7 @@ function _apachesolr_popularity_send_to_solr() {
 /**
  * Gets popularity from database and puts it into a string
  */
+/*
 function _apachesolr_popularity_db_popularity_to_string() {
   
   // Get popularity coefficient
@@ -350,13 +350,84 @@ function _apachesolr_popularity_db_popularity_to_string() {
   
   return $popularity_string;
 }
+*/
+
+/**
+ * Gets popularity from database and puts it into a string
+ */
+function _apachesolr_popularity_update_ranking_modifier() {
+  
+  // Get popularity coefficient
+  $pop_coefficient = (float) variable_get('apachesolr_popularity_influence', 2.0);
+  
+  // Get low popularity influence  
+  $low_pop_influence = (float) variable_get('apachesolr_popularity_low_pop_influence', 1.0);
+  
+  // Get type of popularity compression
+  $compression = variable_get('apachesolr_popularity_compression', 'N');
+  
+  // Set tracking flags. Aka nodes NOT to track
+  $flag = _apachesolr_popularity_get_tracking_flags();
+  
+  // Get the maximum value
+  $pop_max = db_query("SELECT MAX(popularity) FROM {apachesolr_popularity_counter} WHERE flag & :flag = 0", array(':flag' => $flag))->fetchField();
+  
+  // Query the popularity values  
+  $query = db_query("SELECT nid, popularity FROM {apachesolr_popularity_counter} WHERE flag & :flag = 0", array(':flag' => $flag));
+    
+  // Write the popularity
+  foreach ($query as $node) {
+   
+    // Deterime compression type for popularity normalion and calculate popularity_ranking_score
+    if ($compression == 'S') {        // Square root normalization
+      $popularity_ranking_score = $low_pop_influence + $pop_coefficient * _normalize_pop_root($node->popularity, $pop_max);
+    }
+    else if ($compression == 'L') {   // Logrithmic normalization
+      $popularity_ranking_score = $low_pop_influence + $pop_coefficient * _normalize_pop_log($node->popularity, $pop_max);      
+    }
+    else {                            // Basic linear normalization
+      $popularity_ranking_score = $low_pop_influence + $pop_coefficient * _normalize_pop_linear($node->popularity, $pop_max);
+    }
+    // Update ranking modifier
+    db_update('apachesolr_popularity_counter')
+        ->fields(array(
+                'rankingmodifier' => $popularity_ranking_score
+                )
+        )
+        ->condition('nid', $node->nid)
+        ->execute();
+  }
+  
+  // Set ranking modifier to 1.0 for all nodes not tracking  
+  db_update('apachesolr_popularity_counter')
+      ->fields(array('rankingmodifier' => 1.0))
+        ->where('flag & :flag', array(':flag' => $flag))  
+        ->execute();
+}
 
 
 /**
  * Writes popularity string data to the file system and copies it to the Solr data directory
  */
-function _apachesolr_popularity_send_data_to_solr($data) {
+function _apachesolr_popularity_send_data_to_solr() {
   
+  // =============== create string ranking modifiers ======================
+  // Set tracking flags. Aka nodes NOT to track
+  $flag = _apachesolr_popularity_get_tracking_flags();
+  
+  // Query the popularity values  
+  $query = db_query("SELECT nid, rankingmodifier FROM {apachesolr_popularity_counter} WHERE flag & :flag = 0", array(':flag' => $flag));
+
+  // Hold the popularity values in a string for solr
+  $popularity_string = '';
+  
+  // Write the popularity
+  foreach ($query as $node) {
+    // Write sting in a form that Solr will understand via use of external file field
+    $popularity_string .= apachesolr_site_hash() . "/node/" . $node->nid . "=" . $node->rankingmodifier . "\n";      
+  }
+  
+  // ============== write string to disk & send to Solr ==================
   // Get Solr data directory
   $solr_data_dir = variable_get('apachesolr_popularity_solr_data_dir', '');
   
@@ -366,7 +437,7 @@ function _apachesolr_popularity_send_data_to_solr($data) {
     // Construct a URI to the location of the file
     $destination = file_build_uri($filename);
     // Write file to disk
-    file_save_data($data, $destination, $replace=1);
+    file_save_data($popularity_string, $destination, $replace=1);
     // Copy file to Solr data directory
     copy($_SERVER['DOCUMENT_ROOT'] . base_path() . "sites/default/files/" . $filename, $solr_data_dir . $filename);
   }
