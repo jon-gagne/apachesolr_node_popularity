@@ -21,8 +21,7 @@ function apachesolr_popularity_top_pages() {
   
   // Used for creating and ordering the table
   $header = array(
-    array('data' => t('Title'), 'field' => 'nid'),  // Note, cannot order by this
-    //array('data' => t('Node ID'), 'field' => 'nid'),
+    array('data' => t('Title')),  // Note, cannot order by this
     array('data' => t('Popularity'), 'field' => 'popularity', 'sort' => 'desc'),
     array('data' => t('Ranking Modifier'), 'field' => 'rankingmodifier'),
     array('data' => t('Recent Count'), 'field' => 'recentcount', 'sort' => 'desc'),
