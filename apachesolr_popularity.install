@@ -46,10 +46,11 @@ function apachesolr_popularity_install() {
   variable_set('apachesolr_popularity_only_published', TRUE);
   variable_set('apachesolr_popularity_enable_advanced', FALSE);
   variable_set('apachesolr_popularity_init_damping', '0.2') ;
-  variable_set('apachesolr_popularity_init_popularity', '20');
+  variable_set('apachesolr_popularity_init_popularity', 'Average');
   variable_set('apachesolr_popularity_compression', 'N');
   variable_set('apachesolr_popularity_low_pop_influence', '1');
-  variable_set('apachesolr_popularity_daily_count_average', 0);
+  variable_set('apachesolr_popularity_daily_count_average', 10);
+  variable_set('apachesolr_popularity_average_popularity', 10);
   variable_set('apachesolr_popularity_log_base', '2.0');
 }
 

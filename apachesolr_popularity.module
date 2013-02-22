@@ -703,3 +703,21 @@ function _apachesolr_popularity_set_front_page_flags() {
       ->execute();
   }  
 }
+
+
+/**
+ * Get initial popularity value
+ */
+function _apachesolr_popularity_get_initial_popularity() {
+  // Get the average popularity
+  $avg_popularity = variable_get('apachesolr_popularity_average_popularity');
+  // Find out how much to change average popularity
+  $init_popularity = variable_get('apachesolr_popularity_init_popularity');
+  // Determine initial popularity
+  if ($init_popularity == 'Lowest') return 0.0;
+  else if ($init_popularity == 'Low') return $avg_popularity / 2.0;
+  else if ($init_popularity == 'Average') return $avg_popularity;
+  else if ($init_popularity == 'High') return $avg_popularity + (100.0 - $avg_popularity) / 2.0;
+  else if ($init_popularity == 'Highest') return 100.0;
+  else return $avg_popularity;
+}
