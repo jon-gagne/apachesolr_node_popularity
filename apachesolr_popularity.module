@@ -214,8 +214,8 @@ function _apachesolr_popularity_update_daily_count_average() {
   $recent_time = _apachesolr_popularity_get_time_step();
   // Get time since start
   $total_time = _apachesolr_popularity_get_time_start_to_current();
-  // Get the forgetting window
-  $forgetting_window = (float) variable_get('apachesolr_popularity_forgetting_window', 5.0);
+  // Get the forgetting window but prevent from being less than 1 day
+  $forgetting_window = max(variable_get('apachesolr_popularity_forgetting_window', 5.0), 1.0);
   
   // Get hit count since last update
   $recent_count = variable_get('apachesolr_popularity_count_total', 0);
