@@ -128,7 +128,7 @@ function apachesolr_popularity_cron() {
   _apachesolr_popularity_update_time();
   
   // Update daily hit average
-  _apachesolr_popularity_update_hit_average();
+  _apachesolr_popularity_update_daily_count_average();
     
   // Don't bother updating if there was no browsing activity
   if (variable_get('apachesolr_popularity_count_total', 0)) {
@@ -181,7 +181,6 @@ function _apachesolr_popularity_get_time_step() {
   return $elapsed_time;
 }
 
-
 /**
  * Gets elapsed time from start to last update
  */
@@ -194,14 +193,40 @@ function _apachesolr_popularity_get_time_start_to_last() {
   return $elapsed_time;
 }
 
+/**
+ * Gets elapsed time from start to current update
+ */
+function _apachesolr_popularity_get_time_start_to_current() {
+  // Calculate elapsed time in days
+  $elapsed_time = (variable_get(apachesolr_popularity_timestamp_current) - variable_get(apachesolr_popularity_timestamp_initial)) / 86400.0;
+  // Prevent clock issues
+  if ($elapsed_time < 0) $elapsed_time = 0;
+  
+  return $elapsed_time;
+}
+
 
 /**
  * Updates the daily hit average for nodes that are tracked
  */
-function _apachesolr_popularity_update_hit_average() {
-  // Get count since last update
-  //$total_count = variable_get('apachesolr_popularity_count_total', 0);
-  // TODO
+function _apachesolr_popularity_update_daily_count_average() {
+  // Get time since last update
+  $recent_time = _apachesolr_popularity_get_time_step();
+  // Get time since start
+  $total_time = _apachesolr_popularity_get_time_start_to_current();
+  // Get the forgetting window
+  $forgetting_window = (float) variable_get('apachesolr_popularity_forgetting_window', 5.0);
+  
+  // Get hit count since last update
+  $recent_count = variable_get('apachesolr_popularity_count_total', 0);
+  // Get previous average
+  $daily_count_average = variable_get('apachesolr_popularity_daily_count_average', 0);
+  // Update average (using iterterative averaging with decay)
+  $daily_count_average = $daily_count_average
+                         + _calculate_gain_logistic_decay($recent_time, $total_time, $forgetting_window)
+                           * ($recent_count/$recent_time - $daily_count_average);  
+  // Set updated value
+  variable_set('apachesolr_popularity_daily_count_average', $daily_count_average);
 }
 
 
@@ -210,10 +235,10 @@ function _apachesolr_popularity_update_hit_average() {
  */
 function _apachesolr_popularity_update_popularity() {
   
-  // Get total count since last update
-  $total_count = variable_get('apachesolr_popularity_count_total', 0);
+  // Get count since last update
+  $recent_count = variable_get('apachesolr_popularity_count_total', 0);
   // Don't update if there was no activity
-  if (!$total_count) return;
+  if (!$recent_count) return;
   
   
   // Get the forgetting window
@@ -262,11 +287,11 @@ function _apachesolr_popularity_update_popularity() {
   // Calculates popularity
   foreach ($query as $record) {
     // Total time tracked
-    $node_total_count = $record->trackedcount + $total_count;
+    $node_total_count = $record->trackedcount + $recent_count;
     
     // Calculate popularity
     $popularity = ($record->popularity
-                   + (_calculate_gain_logistic_decay($total_count, $node_total_count /* +$init_damping */, $forgetting_window) 
+                   + (_calculate_gain_logistic_decay($recent_count, $node_total_count /* +$init_damping */, $forgetting_window) 
                       * 
                       ( ($record->recentcount * $recentcount_normalization) - $record->popularity )
                      )
