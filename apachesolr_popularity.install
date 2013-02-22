@@ -29,7 +29,7 @@ function apachesolr_popularity_uninstall() {
   variable_del('apachesolr_popularity_init_popularity');
   variable_del('apachesolr_popularity_compression');
   variable_del('apachesolr_popularity_low_pop_influence');
-  variable_del('apachesolr_popularity_count_total');
+  variable_del('apachesolr_popularity_count_recent');
   variable_del('apachesolr_popularity_daily_count_average');
 }
 
@@ -65,7 +65,7 @@ function apachesolr_popularity_enable() {
   variable_set('apachesolr_popularity_timestamp_last', REQUEST_TIME);
   variable_set('apachesolr_popularity_timestamp_current', REQUEST_TIME);
   variable_set('apachesolr_popularity_enable_tracker', 0);                   // tracking must be enabled in settings
-  variable_set('apachesolr_popularity_count_total', 0);
+  variable_set('apachesolr_popularity_count_recent', 0);
 }
 
 
@@ -108,7 +108,7 @@ function apachesolr_popularity_schema() {
         'default' => 1.0,
         'size' => 'medium',
       ),
-      'trackedcount' => array(
+      'trackedtime' => array(
         'description' => 'The total number of nodes viewed since begining tracking.',
         'type' => 'int',
         'unsigned' => TRUE,

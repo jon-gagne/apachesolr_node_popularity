@@ -25,7 +25,7 @@ function apachesolr_popularity_top_pages() {
     array('data' => t('Ranking Multiplier'), 'field' => 'rankingmultiplier', 'sort' => 'desc'),
     array('data' => t('Popularity'), 'field' => 'popularity'),
     array('data' => t('Recent Count'), 'field' => 'recentcount', 'sort' => 'desc'),
-    array('data' => t('Counter Timer'), 'field' => 'trackedcount'),
+    array('data' => t('Time Tracked'), 'field' => 'trackedtime'),
     array('data' => t('Tracking Flag'), 'field' => 'flag'),
   );
     
@@ -34,7 +34,7 @@ function apachesolr_popularity_top_pages() {
   
   // Queries the popularity data from databases
   $query = db_select('apachesolr_popularity_counter', 'p', array('target' => 'slave'))->extend('PagerDefault')->extend('TableSort');
-  $query->fields('p', array('nid', 'popularity', 'rankingmultiplier', 'recentcount', 'trackedcount', 'flag'));
+  $query->fields('p', array('nid', 'popularity', 'rankingmultiplier', 'recentcount', 'trackedtime', 'flag'));
   $query       
     ->groupBy('nid')
     ->where('flag & :flag = 0', array(':flag' => $flag))           
@@ -47,7 +47,7 @@ function apachesolr_popularity_top_pages() {
   $rows = array();
   // Builds table data
   foreach ($result as $page) {
-    $rows[] = array(_apachesolr_popularity_format_item($page->nid), round($page->rankingmultiplier, 2), round($page->popularity, 1), $page->recentcount, $page->trackedcount, $page->flag);
+    $rows[] = array(_apachesolr_popularity_format_item($page->nid), round($page->rankingmultiplier, 2), round($page->popularity, 1), $page->recentcount, $page->trackedtime, $page->flag);
   }
   
   $build['popularity_top_pages_table'] = array(
@@ -462,7 +462,7 @@ function _track_new_nodes() {
  */
 function _reset_popularity() {
   // Clear count total
-  variable_set('apachesolr_popularity_count_total', 0);
+  variable_set('apachesolr_popularity_count_recent', 0);
   // Get initial popularity
   $popularity = (float) variable_get('apachesolr_popularity_init_popularity', 20.0);
   // Reset all nodes
@@ -470,7 +470,7 @@ function _reset_popularity() {
         ->fields(array(
                 'popularity' => $popularity,
                 'recentcount' => 0,
-                'trackedcount' => 0.0,
+                'trackedtime' => 0.0,
                 )
         )
         ->execute();    

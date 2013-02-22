@@ -66,7 +66,7 @@ function apachesolr_popularity_exit() {
       // Only update nodes that should be tracked
       if (!($tracking_flags & $node_flags)) {
         // Increment epoch count total
-        variable_set('apachesolr_popularity_count_total', variable_get('apachesolr_popularity_count_total', 0) + 1);
+        variable_set('apachesolr_popularity_count_recent', variable_get('apachesolr_popularity_count_recent', 0) + 1);
         // Update the node's counters.
         db_merge('apachesolr_popularity_counter')
           ->key(array('nid' => $nid))
@@ -131,7 +131,7 @@ function apachesolr_popularity_cron() {
   _apachesolr_popularity_update_daily_count_average();
     
   // Don't bother updating if there was no browsing activity
-  if (variable_get('apachesolr_popularity_count_total', 0)) {
+  if (variable_get('apachesolr_popularity_count_recent', 0)) {
         
     // Update node popularity
     _apachesolr_popularity_update_popularity();
@@ -140,7 +140,7 @@ function apachesolr_popularity_cron() {
     _apachesolr_popularity_send_to_solr();  
         
     // Clear count total
-    variable_set('apachesolr_popularity_count_total', 0);
+    variable_set('apachesolr_popularity_count_recent', 0);
   }
 }
 
@@ -218,7 +218,7 @@ function _apachesolr_popularity_update_daily_count_average() {
   $forgetting_window = max(variable_get('apachesolr_popularity_forgetting_window', 5.0), 1.0);
   
   // Get hit count since last update
-  $recent_count = variable_get('apachesolr_popularity_count_total', 0);
+  $recent_count = variable_get('apachesolr_popularity_count_recent', 0);
   // Get previous average
   $daily_count_average = variable_get('apachesolr_popularity_daily_count_average', 0);
   // Update average (using iterterative averaging with decay)
@@ -236,7 +236,7 @@ function _apachesolr_popularity_update_daily_count_average() {
 function _apachesolr_popularity_update_popularity() {
   
   // Get count since last update
-  $recent_count = variable_get('apachesolr_popularity_count_total', 0);
+  $recent_count = variable_get('apachesolr_popularity_count_recent', 0);
   // Don't update if there was no activity
   if (!$recent_count) return;
   
@@ -265,7 +265,7 @@ function _apachesolr_popularity_update_popularity() {
   db_update('apachesolr_popularity_counter')
       ->fields(array(
               'recentcount' => 0,
-              'trackedcount' => 0,
+              'trackedtime' => 0,
               )
       )
       ->condition('flag', $flag, '&')
@@ -284,14 +284,18 @@ function _apachesolr_popularity_update_popularity() {
   // Used for time scaling and recentcount normalization
   $recentcount_normalization = 100.0 / ($recentcount_max);
   
+  // Count-adjusted elapsed time since last update
+  $adjusted_recent_time = $recent_count / variable_set('apachesolr_popularity_daily_count_average');
+  
   // Calculates popularity
   foreach ($query as $record) {
-    // Total time tracked
-    $node_total_count = $record->trackedcount + $recent_count;
+    
+    //$node_total_count = $record->trackedtime + $recent_count;
+        
     
     // Calculate popularity
     $popularity = ($record->popularity
-                   + (_calculate_gain_logistic_decay($recent_count, $node_total_count /* +$init_damping */, $forgetting_window) 
+                   + (_calculate_gain_logistic_decay($adjusted_recent_time, $node_total_count + $init_damping, $forgetting_window + $init_damping) 
                       * 
                       ( ($record->recentcount * $recentcount_normalization) - $record->popularity )
                      )
@@ -302,7 +306,7 @@ function _apachesolr_popularity_update_popularity() {
       ->fields(array(
               'popularity' => $popularity,
               'recentcount' => 0,
-              'trackedcount' => $node_total_count,
+              'trackedtime' => $node_total_count,
               )
       )
       ->condition('nid', $record->nid)
@@ -330,10 +334,10 @@ function _calculate_gain_mean($delta_count, $total_count) {
  * 
  * Returns value between [0, 1]
  */
-function _calculate_gain_logistic_decay($delta_count, $total_count, $max_count) {
+function _calculate_gain_logistic_decay($delta_time, $total_time, $max_time) {
   
-  $exp_delta = exp(-2.0*$delta_count/$max_count);
-  $exp_total = exp(-2.0*$total_count/$max_count);
+  $exp_delta = exp(-2.0*$delta_time/$max_time);
+  $exp_total = exp(-2.0*$total_time/$max_time);
   return ( (1 - $exp_delta)/(1 + $exp_delta) ) * ( (1 + $exp_total)/(1 - $exp_total) ) ;
 }
 
@@ -553,7 +557,7 @@ function _apachesolr_popularity_add_node($node) {
           'nid' => $nid,
           'recentcount' => 0,
           'popularity' => (float) variable_get('apachesolr_popularity_init_popularity', 20.0),
-          'trackedcount' => 0.0,
+          'trackedtime' => 0.0,
           'flag' => $flag
       ))
       ->updateFields(array(
@@ -694,7 +698,7 @@ function _apachesolr_popularity_set_front_page_flags() {
           'nid' => $front_nid,
           'recentcount' => 0,
           'popularity' => (float) variable_get('apachesolr_popularity_init_popularity', 20.0),
-          'trackedcount' => 0.0,
+          'trackedtime' => 0.0,
           'flag' => $front_flags
       ))
       ->updateFields(array(
