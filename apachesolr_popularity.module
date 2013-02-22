@@ -124,15 +124,84 @@ function apachesolr_popularity_menu() {
  */
 function apachesolr_popularity_cron() {
   
+  // Update time stamps
+  _apachesolr_popularity_update_time();
+  
+  // Update daily hit average
+  _apachesolr_popularity_update_hit_average();
+    
   // Don't bother updating if there was no browsing activity
   if (variable_get('apachesolr_popularity_count_total', 0)) {
-    
-    // Updates node popularity
+        
+    // Update node popularity
     _apachesolr_popularity_update_popularity();
 
-    // writes data to disk and sends to solr
+    // Write data to disk and sends to solr
     _apachesolr_popularity_send_to_solr();  
+        
+    // Clear count total
+    variable_set('apachesolr_popularity_count_total', 0);
   }
+}
+
+
+/**
+ * Updates time
+ */
+function _apachesolr_popularity_update_time() {
+  
+  // Get time stamps
+  $current_time = REQUEST_TIME;
+  $last_time = variable_get(apachesolr_popularity_timestamp_current);
+  $initial_time = variable_get(apachesolr_popularity_timestamp_initial);
+  
+  // Prevent change time or cpu clock issues (rare)
+  if ($current_time < $last_time) {
+    $last_time = $current_time;
+  }
+  if ($last_time < $initial_time) {
+    variable_set('apachesolr_popularity_timestamp_current', $last_time);
+  }
+  
+  variable_set('apachesolr_popularity_timestamp_last', $last_time);
+  variable_set('apachesolr_popularity_timestamp_current', $current_time);
+  
+}
+
+
+/**
+ * Gets elapsed time from last update to this update
+ */
+function _apachesolr_popularity_get_time_step() {
+  // Calculate elapsed time in days
+  $elapsed_time = (variable_get(apachesolr_popularity_timestamp_current) - variable_get(apachesolr_popularity_timestamp_last)) / 86400.0;
+  // Prevent clock issues
+  if ($elapsed_time < 0) $elapsed_time = 0;
+  
+  return $elapsed_time;
+}
+
+
+/**
+ * Gets elapsed time from start to last update
+ */
+function _apachesolr_popularity_get_time_start_to_last() {
+  // Calculate elapsed time in days
+  $elapsed_time = (variable_get(apachesolr_popularity_timestamp_last) - variable_get(apachesolr_popularity_timestamp_initial)) / 86400.0;
+  // Prevent clock issues
+  if ($elapsed_time < 0) $elapsed_time = 0;
+  
+  return $elapsed_time;
+}
+
+
+/**
+ * Updates the daily hit average for nodes that are tracked
+ */
+function _apachesolr_popularity_update_hit_average() {
+  // Get count since last update
+  //$total_count = variable_get('apachesolr_popularity_count_total', 0);
+  // TODO
 }
 
 
@@ -145,13 +214,7 @@ function _apachesolr_popularity_update_popularity() {
   $total_count = variable_get('apachesolr_popularity_count_total', 0);
   // Don't update if there was no activity
   if (!$total_count) return;
-  // Clear count total
-  variable_set('apachesolr_popularity_count_total', 0);
   
-  // Get timestamp of last popularity update
-  $apachesolr_popularity_timestamp = variable_get('apachesolr_popularity_day_timestamp', '');
-  // Set the popularity timestamp of this update
-  variable_set('apachesolr_popularity_day_timestamp', REQUEST_TIME);
   
   // Get the forgetting window
   $forgetting_window = (float) variable_get('apachesolr_popularity_forgetting_window', 5.0);
@@ -162,10 +225,10 @@ function _apachesolr_popularity_update_popularity() {
   $elapsed_time = 0.2;
       
   // TODO: ADD TIME CHECK
-  // TODO: CREATE VARIABLE $apachesolr_popularity_timestamp
+  // TODO: CREATE VARIABLE $apachesolr_popularity_timestamp_initial
   
   // TODO: CORRECT THIS SO IT MAKES SENSE
-  //if ((REQUEST_TIME - $apachesolr_popularity_timestamp) >= 86400) {
+  //if ((REQUEST_TIME - $apachesolr_popularity_timestamp_initial) >= 86400) {
   
   // Make sure front page is properly flagged
   _apachesolr_popularity_set_front_page_flags();

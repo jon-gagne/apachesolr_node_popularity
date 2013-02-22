@@ -17,7 +17,9 @@ function apachesolr_popularity_uninstall() {
   // Remove variables.
   variable_del('apachesolr_popularity_enable_tracker');
   variable_del('apachesolr_popularity_solr_data_dir');
-  variable_del('apachesolr_popularity_day_timestamp');
+  variable_del('apachesolr_popularity_timestamp_initial');
+  variable_del('apachesolr_popularity_timestamp_last');
+  variable_del('apachesolr_popularity_timestamp_current');
   variable_del('apachesolr_popularity_influence');
   variable_del('apachesolr_popularity_forgetting_window');  
   variable_del('apachesolr_popularity_only_published');
@@ -57,9 +59,11 @@ function apachesolr_popularity_install() {
  */
 function apachesolr_popularity_enable() {  
   // Tracks time
-  variable_set('apachesolr_popularity_day_timestamp', REQUEST_TIME);      
+  variable_set('apachesolr_popularity_timestamp_initial', REQUEST_TIME);  
+  variable_set('apachesolr_popularity_timestamp_last', REQUEST_TIME);
+  variable_set('apachesolr_popularity_timestamp_current', REQUEST_TIME);
   variable_set('apachesolr_popularity_enable_tracker', 0);                   // tracking must be enabled in settings
-  variable_del('apachesolr_popularity_count_total', 0);
+  variable_set('apachesolr_popularity_count_total', 0);
 }
 
 
