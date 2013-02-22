@@ -281,6 +281,10 @@ function _apachesolr_popularity_update_popularity() {
   // Count-adjusted elapsed time since last update -- Weights busy website periods higher
   $adjusted_recent_time = $recent_count / variable_set('apachesolr_popularity_daily_count_average');
   
+  // Used to calculated average popularity
+  $popularity_total = 0;
+  $counter = 0;
+  
   // Calculates popularity
   foreach ($query as $record) {
     
@@ -306,8 +310,12 @@ function _apachesolr_popularity_update_popularity() {
               )
       )
       ->condition('nid', $record->nid)
-      ->execute();        
+      ->execute();
+    
+    $popularity_total += popularity; 
+    $counter += 1;
   }
+  variable_set('apachesolr_popularity_average_popularity', $popularity_total/$counter);
 }
 
 
