@@ -244,16 +244,10 @@ function _apachesolr_popularity_update_popularity() {
   // Get the forgetting window
   $forgetting_window = (float) variable_get('apachesolr_popularity_forgetting_window', 5.0);
   // Get initial damping
-  //$init_damping = (float) variable_get('apachesolr_popularity_init_damping', 0.2);
+  $init_damping = (float) variable_get('apachesolr_popularity_init_damping', 0.2);
   
   // TODO: get current time stamp to determine $elapsed time
-  $elapsed_time = 0.2;
-      
-  // TODO: ADD TIME CHECK
-  // TODO: CREATE VARIABLE $apachesolr_popularity_timestamp_initial
-  
-  // TODO: CORRECT THIS SO IT MAKES SENSE
-  //if ((REQUEST_TIME - $apachesolr_popularity_timestamp_initial) >= 86400) {
+  //$elapsed_time = 0.2;
   
   // Make sure front page is properly flagged
   _apachesolr_popularity_set_front_page_flags();
@@ -284,18 +278,20 @@ function _apachesolr_popularity_update_popularity() {
   // Used for time scaling and recentcount normalization
   $recentcount_normalization = 100.0 / ($recentcount_max);
   
-  // Count-adjusted elapsed time since last update
+  // Count-adjusted elapsed time since last update -- Weights busy website periods higher
   $adjusted_recent_time = $recent_count / variable_set('apachesolr_popularity_daily_count_average');
   
   // Calculates popularity
   foreach ($query as $record) {
     
-    //$node_total_count = $record->trackedtime + $recent_count;
-        
+    // Count-adjusted tracked time -- Weights busy website periods higher
+    $adjusted_tracked_total_time = $record->trackedtime + $adjusted_recent_time;
+    // Actual tracked time
+    $true_tracked_total_time = $record->trackedtime + _apachesolr_popularity_get_time_step();
     
     // Calculate popularity
     $popularity = ($record->popularity
-                   + (_calculate_gain_logistic_decay($adjusted_recent_time, $node_total_count + $init_damping, $forgetting_window + $init_damping) 
+                   + (_calculate_gain_logistic_decay($adjusted_recent_time, $adjusted_tracked_total_time + $init_damping, $forgetting_window + $init_damping) 
                       * 
                       ( ($record->recentcount * $recentcount_normalization) - $record->popularity )
                      )
@@ -306,7 +302,7 @@ function _apachesolr_popularity_update_popularity() {
       ->fields(array(
               'popularity' => $popularity,
               'recentcount' => 0,
-              'trackedtime' => $node_total_count,
+              'trackedtime' => $true_tracked_total_time,  // used 'true...' instead of 'adjusted...' because the adjusted approached the true after multiple updates, yet is slightly less accurate
               )
       )
       ->condition('nid', $record->nid)
