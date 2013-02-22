@@ -111,7 +111,7 @@ function apachesolr_popularity_schema() {
         'size' => 'medium',
       ),
       'trackedtime' => array(
-        'description' => 'The total number of nodes viewed since begining tracking.',
+        'description' => 'Amount of time since begining tracking.',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
