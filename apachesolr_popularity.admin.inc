@@ -315,10 +315,10 @@ function apachesolr_popularity_advanced_form() {
   }  
   
   $init_popularity_options = array( 'Lowest' => 'Lowest', 'Low' => 'Low', 'Average' => 'Average', 'High' => 'High', 'Highest' => 'Highest' );
-  $form['settings']['apachesolr_popularity_init_popularity'] = array(
+  $form['settings']['apachesolr_popularity_init_popularity_quantity'] = array(
       '#type' => 'select',
       '#title' => t('Initial node popularity'),
-      '#default_value' => (string) variable_get('apachesolr_popularity_init_popularity', 'Average'),
+      '#default_value' => (string) variable_get('apachesolr_popularity_init_popularity_quantity', 'Average'),
       '#options' => $init_popularity_options,
       '#description' => t("Sets inital popularity for newly tracked nodes.<br>Lets the initial popularity of new nodes to be boosted."),
       '#states' => array(
@@ -399,18 +399,20 @@ function apachesolr_popularity_advanced_form() {
  */
 function apachesolr_popularity_advanced_form_submit($form, &$form_state) {
 
+  
+  $send_to_solr = false;
+  
   // Checks if initial damping has changed
   if ( $form_state['values']['apachesolr_popularity_init_damping'] != variable_get('apachesolr_popularity_init_damping') ) {
     drupal_set_message(t("Initial damping changed.  This will effect future popularity values only."));
   }
     
   // Checks if initial popularity has changed
-  if ( $form_state['values']['apachesolr_popularity_init_popularity'] != variable_get('apachesolr_popularity_init_popularity') ) {
-    drupal_set_message(t("Initial node popularity changed.  This will effect future popularity values only."));
+  if ( $form_state['values']['apachesolr_popularity_init_popularity_quantity'] != variable_get('apachesolr_popularity_init_popularity_quantity') ) {
+    
+    $send_to_solr = true;
   }
-  
-  $send_to_solr = false;
-  
+    
   // Checks if popularity compression has changed.  Is yes, send data to Solr
   if ( $form_state['values']['apachesolr_popularity_compression'] != variable_get('apachesolr_popularity_compression') ) {
     variable_set('apachesolr_popularity_compression', $form_state['values']['apachesolr_popularity_compression']);
@@ -452,7 +454,7 @@ function _track_new_nodes() {
             );
 
   // Get initial popularity value
-  $popularity = (float) variable_get('apachesolr_popularity_init_popularity', 20.0);
+  $popularity = (float) variable_get('apachesolr_popularity_init_popularity_quantity', 20.0);
   // Get front page nid
   $frontpage_nid = _apachesolr_popularity_get_front_page_nid();
   
@@ -481,7 +483,7 @@ function _reset_popularity() {
   // Clear count total
   variable_set('apachesolr_popularity_count_recent', 0);
   // Get initial popularity
-  $popularity = (float) variable_get('apachesolr_popularity_init_popularity', 20.0);
+  $popularity = (float) variable_get('apachesolr_popularity_init_popularity_quantity', 20.0);
   // Reset all nodes
   db_update('apachesolr_popularity_counter')
         ->fields(array(
