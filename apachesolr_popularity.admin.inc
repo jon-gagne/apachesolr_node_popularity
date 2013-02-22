@@ -314,13 +314,13 @@ function apachesolr_popularity_advanced_form() {
     );    
   }  
   
-  $init_damping_options = array( '0' => '0.0', '0.05' => '0.05', '0.2' => '0.2', '0.5' => '0.5', '1' => '1', '2' => '2', '5' => '5' );
-  $form['settings']['apachesolr_popularity_init_damping'] = array(
+  $init_popularity_options = array( 'Lowest' => 'Lowest', 'low' => 'Low', 'Average' => 'Average', 'High' => 'High', 'Highest' => 'Highest' );
+  $form['settings']['apachesolr_popularity_init_popularity'] = array(
       '#type' => 'select',
-      '#title' => t('Initial dampening (DISABLED)'),
-      '#default_value' => (string) variable_get('apachesolr_popularity_init_damping', '0.2'),
-      '#options' => $init_damping_options,
-      '#description' => t("Smoothes initial popularity estimates.<br> 0 = None, 0.2 = Moderate, 2 = High."),
+      '#title' => t('Initial node popularity'),
+      '#default_value' => (string) variable_get('apachesolr_popularity_init_popularity', 'Average'),
+      '#options' => $init_popularity_options,
+      '#description' => t("Sets inital popularity for newly tracked nodes.<br>Lets the initial popularity of new nodes to be boosted."),
       '#states' => array(
         'disabled' => array(
           ':input[name="apachesolr_popularity_enable_advanced"]' => array('checked' => FALSE)
@@ -328,13 +328,13 @@ function apachesolr_popularity_advanced_form() {
       ),
   );
   
-  $init_popularity_options = array( '0' => '0', '10' => '10', '20' => '20', '50' => '50', '100' => '100' );
-  $form['settings']['apachesolr_popularity_init_popularity'] = array(
+  $init_damping_options = array( '0' => '0.0', '0.05' => '0.05', '0.2' => '0.2', '0.5' => '0.5', '1' => '1', '2' => '2', '5' => '5' );
+  $form['settings']['apachesolr_popularity_init_damping'] = array(
       '#type' => 'select',
-      '#title' => t('Initial node popularity'),
-      '#default_value' => (string) variable_get('apachesolr_popularity_init_popularity', '20'),
-      '#options' => $init_popularity_options,
-      '#description' => t("Sets inital popularity for newly tracked nodes.<br>Starting popularity: 0 = Lowest, 20 = Moderate, 100 = Highest."),
+      '#title' => t('Initial dampening'),
+      '#default_value' => (string) variable_get('apachesolr_popularity_init_damping', '0.2'),
+      '#options' => $init_damping_options,
+      '#description' => t("Approximate half-life of initial popularity (in days).<r> 0 = Replaced at first popularity estimate, 0.2 = About five hours, 2 = Two days."),
       '#states' => array(
         'disabled' => array(
           ':input[name="apachesolr_popularity_enable_advanced"]' => array('checked' => FALSE)
@@ -348,8 +348,25 @@ function apachesolr_popularity_advanced_form() {
       '#title' => t('Popularity compression on high traffic nodes'),
       '#default_value' => (string) variable_get('apachesolr_popularity_compression', 'N'),
       '#options' => $compression_options,
-      '#description' => t("Prevent high traffic nodes from dominating the search results.<br>Compression type: Linear = None, Sqrt = Moderate, Log = High."),
+      '#description' => t("Prevents high-traffic nodes from dominating the search results.<br>Compression type: Linear = None, Sqrt = Moderate, Log = High."),
       '#states' => array(
+        'disabled' => array(
+          ':input[name="apachesolr_popularity_enable_advanced"]' => array('checked' => FALSE)
+        ),
+      ),
+  );
+  
+  $log_base = array( '1.5' => '1.5', '2.0' => '2.0', '2.71828' => 'e', '5.0' => '5.0', '10.0' => '10.0' );
+  $form['settings']['apachesolr_popularity_log_base'] = array(
+      '#type' => 'select',
+      '#title' => t('Popularity compression\'s Log base'),
+      '#default_value' => (string) variable_get('apachesolr_popularity_log_base', '2.0'),
+      '#options' => $log_base,
+      '#description' => t("Sets the base of the log for compression.  Higher values translate into greater compression."),
+      '#states' => array(
+        'visible' => array(
+          ':input[name="apachesolr_popularity_compression"]' => array('value' => 'L')
+        ),
         'disabled' => array(
           ':input[name="apachesolr_popularity_enable_advanced"]' => array('checked' => FALSE)
         ),
