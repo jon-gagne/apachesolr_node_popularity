@@ -371,7 +371,11 @@ function _normalize_pop_root($popularity, $pop_max, $pop_min) {
   $pop_norm = $pop_max - $pop_min;
   if ( $pop_norm < 1.0 ) $pop_norm = 1.0;
   
-  return sqrt(($popularity - $pop_min) / $pop_norm);
+  $popularity_shifted = $popularity - $pop_min;
+  // prevents floating point issue with very small negative numbers
+  if ($popularity_shifted < 0) $popularity_shifted = 0; 
+  
+  return sqrt($popularity_shifted / $pop_norm);
 }
 
 /**
