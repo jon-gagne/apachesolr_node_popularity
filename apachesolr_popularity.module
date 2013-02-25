@@ -727,7 +727,7 @@ function _apachesolr_popularity_get_initial_popularity() {
   if ($init_popularity_strength == 'Lowest') return 0.0;
   else if ($init_popularity_strength == 'Low') return $avg_popularity / 2.0;
   else if ($init_popularity_strength == 'Average') return $avg_popularity;
-  else if ($init_popularity_strength == 'High') return $avg_popularity + (100.0 - $avg_popularity) / 2.0;
+  else if ($init_popularity_strength == 'High') return $avg_popularity + (100.0 - $avg_popularity) / 3.0;
   else if ($init_popularity_strength == 'Highest') return 100.0;
   else return $avg_popularity;
 }

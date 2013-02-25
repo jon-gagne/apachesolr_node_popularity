@@ -493,6 +493,10 @@ function _reset_popularity() {
                 'trackedtime' => 0.0,
                 )
         )
-        ->execute();    
+        ->execute();
+  
+  // Update timestamps
+  _apachesolr_popularity_update_time();
+  
 }
 
