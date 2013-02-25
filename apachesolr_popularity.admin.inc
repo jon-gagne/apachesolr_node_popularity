@@ -409,7 +409,8 @@ function apachesolr_popularity_advanced_form_submit($form, &$form_state) {
     
   // Checks if initial popularity has changed
   if ( $form_state['values']['apachesolr_popularity_init_popularity_quantity'] != variable_get('apachesolr_popularity_init_popularity_quantity') ) {
-    
+    variable_set('apachesolr_popularity_init_popularity_quantity', $form_state['values']['apachesolr_popularity_init_popularity_quantity']);
+    _apachesolr_popularity_update_initial_popularity();
     $send_to_solr = true;
   }
     
@@ -454,7 +455,7 @@ function _track_new_nodes() {
             );
 
   // Get initial popularity value
-  $popularity = (float) variable_get('apachesolr_popularity_init_popularity_quantity', 20.0);
+  $popularity = _apachesolr_popularity_get_initial_popularity();
   // Get front page nid
   $frontpage_nid = _apachesolr_popularity_get_front_page_nid();
   
@@ -483,7 +484,7 @@ function _reset_popularity() {
   // Clear count total
   variable_set('apachesolr_popularity_count_recent', 0);
   // Get initial popularity
-  $popularity = (float) variable_get('apachesolr_popularity_init_popularity_quantity', 20.0);
+  $popularity = _apachesolr_popularity_get_initial_popularity();
   // Reset all nodes
   db_update('apachesolr_popularity_counter')
         ->fields(array(

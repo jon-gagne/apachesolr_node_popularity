@@ -742,7 +742,7 @@ function _apachesolr_popularity_update_initial_popularity() {
               'popularity' => $initial_popularity,
               )
       )
-      ->condition('trackedtime', 0, '=')
+      ->condition("trackedtime", 0.0, '=')    
       ->execute();
   
 }
