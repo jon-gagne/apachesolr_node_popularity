@@ -47,7 +47,7 @@ function apachesolr_popularity_top_pages() {
   $rows = array();
   // Builds table data
   foreach ($result as $page) {
-    $rows[] = array(_apachesolr_popularity_format_item($page->nid), round($page->rankingmultiplier, 2), round($page->popularity, 1), $page->recentcount, $page->trackedtime, $page->flag);
+    $rows[] = array(_apachesolr_popularity_format_item($page->nid), round($page->rankingmultiplier, 2), round($page->popularity, 1), $page->recentcount, round($page->trackedtime, 4), $page->flag);
   }
   
   $build['popularity_top_pages_table'] = array(
