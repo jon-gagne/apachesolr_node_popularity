@@ -383,10 +383,13 @@ function _normalize_pop_root($popularity, $pop_max, $pop_min) {
  * 
  *    High compression
  */
-function _normalize_pop_log($popularity, $pop_max, $pop_min, $smoothing_factor=1.0, $base=2.0) {
+function _normalize_pop_log($popularity, $pop_max, $pop_min, $smoothing_factor=1.0) {
   // prevents divsion of zero and reduces influence of popularity on ranking if it is very low or very similar
   $pop_norm = $pop_max - $pop_min;
   if ( $pop_norm < 1.0 ) $pop_norm = 1.0;
+  
+  // Get log base
+  $base = variable_get('apachesolr_popularity_log_base', 2.0);
   
   return (log($smoothing_factor + ($popularity - $pop_min), $base) / log($smoothing_factor + $pop_norm, $base));
 }

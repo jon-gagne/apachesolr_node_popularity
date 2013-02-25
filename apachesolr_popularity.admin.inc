@@ -417,6 +417,12 @@ function apachesolr_popularity_advanced_form_submit($form, &$form_state) {
     $send_to_solr = true;
   }
   
+  // Checks if log normalization base has changed.  Is yes, send data to Solr
+  if ( $form_state['values']['apachesolr_popularity_log_base'] != variable_get('apachesolr_popularity_log_base') ) {
+    variable_set('apachesolr_popularity_log_base', $form_state['values']['apachesolr_popularity_log_base']);
+    $send_to_solr = true;
+  }
+  
   // Checks if low popularity influence has changed. 
   if ( $form_state['values']['apachesolr_popularity_low_pop_influence'] != variable_get('apachesolr_popularity_low_pop_influence') ) {
     variable_set('apachesolr_popularity_low_pop_influence', $form_state['values']['apachesolr_popularity_low_pop_influence']);
