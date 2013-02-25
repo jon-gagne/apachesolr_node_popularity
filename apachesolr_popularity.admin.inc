@@ -314,34 +314,6 @@ function apachesolr_popularity_advanced_form() {
     );    
   }  
   
-  $init_popularity_options = array( 'Lowest' => 'Lowest', 'Low' => 'Low', 'Average' => 'Average', 'High' => 'High', 'Highest' => 'Highest' );
-  $form['settings']['apachesolr_popularity_init_popularity_quantity'] = array(
-      '#type' => 'select',
-      '#title' => t('Initial node popularity'),
-      '#default_value' => (string) variable_get('apachesolr_popularity_init_popularity_quantity', 'Average'),
-      '#options' => $init_popularity_options,
-      '#description' => t("Sets inital popularity for newly tracked nodes.<br>Lets the initial popularity of new nodes to be boosted."),
-      '#states' => array(
-        'disabled' => array(
-          ':input[name="apachesolr_popularity_enable_advanced"]' => array('checked' => FALSE)
-        ),
-      ),
-  );
-  
-  $init_damping_options = array( '0' => '0.0', '0.02' => '0.02', '0.1' => '0.1', '0.2' => '0.2', '0.5' => '0.5', '1' => '1', '2' => '2', '5' => '5' );
-  $form['settings']['apachesolr_popularity_init_damping'] = array(
-      '#type' => 'select',
-      '#title' => t('Initial dampening'),
-      '#default_value' => (string) variable_get('apachesolr_popularity_init_damping', '0.2'),
-      '#options' => $init_damping_options,
-      '#description' => t("Number of days until the popularity is halfway in between the initial popularity and the actual popularity.<r> 0 = Replaced at first popularity estimate, 0.2 = About five hours, 2 = Two days."),
-      '#states' => array(
-        'disabled' => array(
-          ':input[name="apachesolr_popularity_enable_advanced"]' => array('checked' => FALSE)
-        ),
-      ),
-  );
-    
   $compression_options = array( 'N' => 'None', 'S' => 'Sqrt', 'L' => 'Log' );
   $form['settings']['apachesolr_popularity_compression'] = array(
       '#type' => 'select',
@@ -380,6 +352,34 @@ function apachesolr_popularity_advanced_form() {
       '#default_value' => (string) variable_get('apachesolr_popularity_low_pop_influence', '1'),
       '#options' => $low_pop_influence_options,
       '#description' => t("Allows unpopular pages to still still be found in a search.<br> 0 = Hard to find unpopular page, 1 = Typical, 2 = Found easier."),
+      '#states' => array(
+        'disabled' => array(
+          ':input[name="apachesolr_popularity_enable_advanced"]' => array('checked' => FALSE)
+        ),
+      ),
+  );
+  
+  $init_popularity_options = array( 'Lowest' => 'Lowest', 'Low' => 'Low', 'Average' => 'Average', 'High' => 'High', 'Highest' => 'Highest' );
+  $form['settings']['apachesolr_popularity_init_popularity_quantity'] = array(
+      '#type' => 'select',
+      '#title' => t('Initial node popularity'),
+      '#default_value' => (string) variable_get('apachesolr_popularity_init_popularity_quantity', 'Average'),
+      '#options' => $init_popularity_options,
+      '#description' => t("Sets inital popularity for newly tracked nodes.<br>Lets the initial popularity of new nodes to be boosted."),
+      '#states' => array(
+        'disabled' => array(
+          ':input[name="apachesolr_popularity_enable_advanced"]' => array('checked' => FALSE)
+        ),
+      ),
+  );
+  
+  $init_damping_options = array( '0' => '0.0', '0.02' => '0.02', '0.1' => '0.1', '0.2' => '0.2', '0.5' => '0.5', '1' => '1', '2' => '2', '5' => '5' );
+  $form['settings']['apachesolr_popularity_init_damping'] = array(
+      '#type' => 'select',
+      '#title' => t('Initial dampening'),
+      '#default_value' => (string) variable_get('apachesolr_popularity_init_damping', '0.2'),
+      '#options' => $init_damping_options,
+      '#description' => t("Number of days until the popularity is halfway in between the initial popularity and the actual popularity.<r> 0 = Replaced at first popularity estimate, 0.2 = About five hours, 2 = Two days."),
       '#states' => array(
         'disabled' => array(
           ':input[name="apachesolr_popularity_enable_advanced"]' => array('checked' => FALSE)
