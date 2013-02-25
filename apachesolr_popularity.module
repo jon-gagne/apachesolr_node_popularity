@@ -718,24 +718,28 @@ function _apachesolr_popularity_set_front_page_flags() {
 /**
  * Get initial popularity value
  */
-function _apachesolr_popularity_get_initial_popularity() {
+function _apachesolr_popularity_get_initial_popularity($new=TRUE) {
   // Get the average popularity
   $avg_popularity = variable_get('apachesolr_popularity_average_popularity');
-  // Find out how much to change average popularity
-  $init_popularity_strength = variable_get('apachesolr_popularity_init_popularity_quantity');
-  // Determine initial popularity
-  if ($init_popularity_strength == 'Lowest') return 0.0;
-  else if ($init_popularity_strength == 'Low') return $avg_popularity / 2.0;
-  else if ($init_popularity_strength == 'Average') return $avg_popularity;
-  else if ($init_popularity_strength == 'High') return $avg_popularity + (100.0 - $avg_popularity) / 3.0;
-  else if ($init_popularity_strength == 'Highest') return 100.0;
+  // For new nodes
+  if ($new) {
+    // Find out how much to change average popularity
+    $init_popularity_strength = variable_get('apachesolr_popularity_init_popularity_quantity');
+    // Determine initial popularity
+    if ($init_popularity_strength == 'Lowest') return 0.0;
+    else if ($init_popularity_strength == 'Low') return $avg_popularity / 2.0;
+    else if ($init_popularity_strength == 'Average') return $avg_popularity;
+    else if ($init_popularity_strength == 'High') return $avg_popularity + (100.0 - $avg_popularity) / 3.0;
+    else if ($init_popularity_strength == 'Highest') return 100.0;
+    else return $avg_popularity;
+  }
   else return $avg_popularity;
 }
 
 /**
  * Update initial popularity values in the database
  */
-function _apachesolr_popularity_update_initial_popularity() {
+function _apachesolr_popularity_update_initial_popularity($old_popularity) {
   // Get initial popularity
   $initial_popularity = _apachesolr_popularity_get_initial_popularity();
   // Update all newly created nodes
@@ -743,8 +747,7 @@ function _apachesolr_popularity_update_initial_popularity() {
       ->fields(array(
               'popularity' => $initial_popularity,
               )
-      )
-      ->condition("trackedtime", 0.0, '=')    
-      ->execute();
-  
+      )      
+      ->condition('popularity', $old_popularity, '=')
+      ->execute();  
 }
