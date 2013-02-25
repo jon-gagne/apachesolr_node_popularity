@@ -111,12 +111,12 @@ function apachesolr_popularity_schema() {
         'size' => 'medium',
       ),
       'trackedtime' => array(
-        'description' => 'Amount of time since begining tracking.',
-        'type' => 'int',
+        'description' => 'Days since begining tracking.',
+        'type' => 'float',
         'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0.0,
-        'size' => 'big',
+        'size' => 'medium',
       ),
         'flag' => array(
         'description' => 'Popularity tracking flag.',

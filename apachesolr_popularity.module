@@ -152,8 +152,8 @@ function _apachesolr_popularity_update_time() {
   
   // Get time stamps
   $current_time = REQUEST_TIME;
-  $last_time = variable_get(apachesolr_popularity_timestamp_current);
-  $initial_time = variable_get(apachesolr_popularity_timestamp_initial);
+  $last_time = variable_get('apachesolr_popularity_timestamp_current');
+  $initial_time = variable_get('apachesolr_popularity_timestamp_initial');
   
   // Prevent change time or cpu clock issues (rare)
   if ($current_time < $last_time) {
@@ -174,7 +174,7 @@ function _apachesolr_popularity_update_time() {
  */
 function _apachesolr_popularity_get_time_step() {
   // Calculate elapsed time in days
-  $elapsed_time = (variable_get(apachesolr_popularity_timestamp_current) - variable_get(apachesolr_popularity_timestamp_last)) / 86400.0;
+  $elapsed_time = (variable_get('apachesolr_popularity_timestamp_current') - variable_get('apachesolr_popularity_timestamp_last')) / 86400.0;
   // Prevent clock issues
   if ($elapsed_time < 0) $elapsed_time = 0;
   
@@ -186,7 +186,7 @@ function _apachesolr_popularity_get_time_step() {
  */
 function _apachesolr_popularity_get_time_start_to_last() {
   // Calculate elapsed time in days
-  $elapsed_time = (variable_get(apachesolr_popularity_timestamp_last) - variable_get(apachesolr_popularity_timestamp_initial)) / 86400.0;
+  $elapsed_time = (variable_get('apachesolr_popularity_timestamp_last') - variable_get('apachesolr_popularity_timestamp_initial')) / 86400.0;
   // Prevent clock issues
   if ($elapsed_time < 0) $elapsed_time = 0;
   
@@ -198,7 +198,7 @@ function _apachesolr_popularity_get_time_start_to_last() {
  */
 function _apachesolr_popularity_get_time_start_to_current() {
   // Calculate elapsed time in days
-  $elapsed_time = (variable_get(apachesolr_popularity_timestamp_current) - variable_get(apachesolr_popularity_timestamp_initial)) / 86400.0;
+  $elapsed_time = (variable_get('apachesolr_popularity_timestamp_current') - variable_get('apachesolr_popularity_timestamp_initial')) / 86400.0;
   // Prevent clock issues
   if ($elapsed_time < 0) $elapsed_time = 0;
   
@@ -210,8 +210,8 @@ function _apachesolr_popularity_get_time_start_to_current() {
  * Updates the daily hit average for nodes that are tracked
  */
 function _apachesolr_popularity_update_daily_count_average() {
-  // Get time since last update
-  $recent_time = _apachesolr_popularity_get_time_step();
+  // Get time since last update and prevent division by zero
+  $recent_time = max(_apachesolr_popularity_get_time_step(), 0.00001);
   // Get time since start
   $total_time = _apachesolr_popularity_get_time_start_to_current();
   // Get the forgetting window but prevent from being less than 1 day
@@ -270,16 +270,18 @@ function _apachesolr_popularity_update_popularity() {
   
   // Get recent max count for tracked nodes. Used for normalization
   $recentcount_max = db_query("SELECT MAX(recentcount) FROM {apachesolr_popularity_counter} WHERE flag & :flag = 0", array(':flag' => $flag))->fetchField();
-
+  
+  // Get elapsed time
+  $elapsed_time = _apachesolr_popularity_get_time_step();
+  
   // Prevents division by zero
-  if ( $elapsed_time == 0.0 ) $elapsed_time = 0.0001;
-  if ( $recentcount_max < 1.0 ) $recentcount_max = 1.0;
+  //if ( $elapsed_time == 0.0 ) $elapsed_time = 0.00001;
   
   // Used for time scaling and recentcount normalization
-  $recentcount_normalization = 100.0 / ($recentcount_max);
+  $recentcount_normalization = 100.0 / (max($recentcount_max, 1.0));
   
   // Count-adjusted elapsed time since last update -- Weights busy website periods higher
-  $adjusted_recent_time = $recent_count / variable_set('apachesolr_popularity_daily_count_average');
+  $adjusted_recent_time = $recent_count / variable_get('apachesolr_popularity_daily_count_average');
   
   // Used to calculated average popularity
   $popularity_total = 0;
@@ -291,7 +293,7 @@ function _apachesolr_popularity_update_popularity() {
     // Count-adjusted tracked time -- Weights busy website periods higher
     $adjusted_tracked_total_time = $record->trackedtime + $adjusted_recent_time;
     // Actual tracked time
-    $true_tracked_total_time = $record->trackedtime + _apachesolr_popularity_get_time_step();
+    $true_tracked_total_time = $record->trackedtime + $elapsed_time;
     
     // Calculate popularity
     $popularity = ($record->popularity
@@ -312,7 +314,7 @@ function _apachesolr_popularity_update_popularity() {
       ->condition('nid', $record->nid)
       ->execute();
     
-    $popularity_total += popularity; 
+    $popularity_total += $popularity; 
     $counter += 1;
   }
   variable_set('apachesolr_popularity_average_popularity', $popularity_total/$counter);
