@@ -102,7 +102,7 @@ function apachesolr_popularity_settings_form() {
     '#type' => 'fieldset',
     '#title' => t('Basic popularity configurations'),
   );
-  $popularity_influence_options = array( '0.01' => '1%', '0.1' => '10%', '0.5' => '50%', '1' => '100%', '2' => '200%', '4' => '400%', '10' => '1000%' );
+  $popularity_influence_options = array( '0.02' => '1%', '0.2' => '10%', '1.0' => '50%', '2' => '100%', '4' => '200%', '8' => '400%', '20' => '1000%' );
   $form['basic_config']['apachesolr_popularity_influence'] = array(
       '#type' => 'select',
       '#title' => t('Popularity influence'),
