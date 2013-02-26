@@ -87,7 +87,7 @@ function apachesolr_popularity_settings_form() {
     '#type' => 'checkbox',
     '#title' => t('Enable Apache Solr Node Popularity'),
     '#default_value' => variable_get('apachesolr_popularity_enable_tracker', 0),
-    '#description' => t('Track node viewing and calculate a popularity metric based on view frequency.'),
+    '#description' => t('Track node views and calculate node popularity based on viewing trends.'),
   );           
   $form['solr_settings']['apachesolr_popularity_solr_data_dir'] = array(
     '#type' => 'textfield',
@@ -108,7 +108,7 @@ function apachesolr_popularity_settings_form() {
       '#title' => t('Popularity influence'),
       '#default_value' => (string) variable_get('apachesolr_popularity_influence', '2'),
       '#options' => $popularity_influence_options,
-      '#description' => t("Amount that node popularity influences Apache Solr's ranking scores.<br>Ranking scores will be increase up to this amount."),
+      '#description' => t("Amount that node popularity influences Apache Solr's search queries (i.e., ranking scores).<br>Ranking scores will be increase up to this amount."),
       '#states' => array(
         'enabled' => array(
           ':input[name="apachesolr_popularity_enable_tracker"]' => array('checked' => TRUE),
@@ -122,7 +122,7 @@ function apachesolr_popularity_settings_form() {
       '#title' => t('Forgetting window'),
       '#default_value' => (string) variable_get('apachesolr_popularity_forgetting_window', '5'),
       '#options' => $forgetting_window_options,
-      '#description' => t('After this many days of tracking, biasing recent popularity begins to fade on. <br> The lower the value is, the more that newer popularity measurements are biased.'),
+      '#description' => t('Older popularity values begin to fade off after about this many days.<br> The lower the value is, the more that newer popularity measurements are biased positively.'),
       '#states' => array(
         'enabled' => array(
           ':input[name="apachesolr_popularity_enable_tracker"]' => array('checked' => TRUE),
@@ -134,7 +134,7 @@ function apachesolr_popularity_settings_form() {
     '#type' => 'checkbox',
     '#title' => t('Only track published pages'),
     '#default_value' => variable_get('apachesolr_popularity_only_published', 1),
-    '#description' => t('Pages may receve a number of hits during creation, which may not relect the popularity of the node at query time.\nNote: a page is considered published if the page\'s publish field is checked'),
+    '#description' => t('Pages may receve a number of hits during creation, which may not reflect the popularity of the node at query time.<br>Note: a page is considered published if the page\'s publish field is checked.'),
     '#default_value' => variable_get('apachesolr_popularity_only_published', TRUE),
     '#states' => array(
       'enabled' => array(
@@ -147,7 +147,7 @@ function apachesolr_popularity_settings_form() {
     '#type' => 'checkbox',
     '#title' => t('Disable popularity tracking for the front page'),
     '#default_value' => variable_get('apachesolr_popularity_disable_frontpage', 1),
-    '#description' => t('Due to the high number of views of most front pages, disabling popularity tracking of it will generally improve search result.'),
+    '#description' => t('Due to the high number of views of most front pages, disabling popularity tracking of it will generally improve search results.'),
     '#default_value' => variable_get('apachesolr_popularity_disable_frontpage', TRUE),
     '#states' => array(
       'enabled' => array(
@@ -298,7 +298,7 @@ function apachesolr_popularity_advanced_form() {
   if ( variable_get('apachesolr_popularity_enable_tracker')==1 ) {
     $form['settings']['apachesolr_popularity_enable_advanced'] = array(
       '#type' => 'checkbox',
-      '#title' => t('Enables advanced settings'),
+      '#title' => t('Enable advanced settings'),
       '#default_value' => variable_get('apachesolr_popularity_enable_advanced', FALSE),
       '#description' => t('For advanced users only'),
     );
@@ -314,44 +314,13 @@ function apachesolr_popularity_advanced_form() {
     );    
   }  
   
-  $compression_options = array( 'N' => 'None', 'S' => 'Sqrt', 'L' => 'Log' );
+  $compression_options = array( 'N' => 'None', 'S' => 'Moderate', 'L' => 'High' );
   $form['settings']['apachesolr_popularity_compression'] = array(
       '#type' => 'select',
-      '#title' => t('Popularity compression on high traffic nodes'),
+      '#title' => t('Popularity compression on high-traffic nodes'),
       '#default_value' => (string) variable_get('apachesolr_popularity_compression', 'N'),
       '#options' => $compression_options,
-      '#description' => t("Prevents high-traffic nodes from dominating the search results.<br>Compression type: Linear = None, Sqrt = Moderate, Log = High."),
-      '#states' => array(
-        'disabled' => array(
-          ':input[name="apachesolr_popularity_enable_advanced"]' => array('checked' => FALSE)
-        ),
-      ),
-  );
-  
-  $log_base = array( '1.5' => '1.5', '2.0' => '2.0', '2.71828' => 'e', '5.0' => '5.0', '10.0' => '10.0' );
-  $form['settings']['apachesolr_popularity_log_base'] = array(
-      '#type' => 'select',
-      '#title' => t('Popularity compression\'s Log base'),
-      '#default_value' => (string) variable_get('apachesolr_popularity_log_base', '2.0'),
-      '#options' => $log_base,
-      '#description' => t("Sets the base of the log for compression.  Higher values translate into greater compression."),
-      '#states' => array(
-        'visible' => array(
-          ':input[name="apachesolr_popularity_compression"]' => array('value' => 'L')
-        ),
-        'disabled' => array(
-          ':input[name="apachesolr_popularity_enable_advanced"]' => array('checked' => FALSE)
-        ),
-      ),
-  );
-    
-  $low_pop_influence_options = array( '0' => '0', '0.2' => '0.2', '0.5' => '0.5', '1' => '1', '2' => '2' );
-  $form['settings']['apachesolr_popularity_low_pop_influence'] = array(
-      '#type' => 'select',
-      '#title' => t('Low popularity influence'),
-      '#default_value' => (string) variable_get('apachesolr_popularity_low_pop_influence', '1'),
-      '#options' => $low_pop_influence_options,
-      '#description' => t("Allows unpopular pages to still still be found in a search.<br> 0 = Hard to find unpopular page, 1 = Typical, 2 = Found easier."),
+      '#description' => t("Prevents high-traffic nodes from dominating the search results."),
       '#states' => array(
         'disabled' => array(
           ':input[name="apachesolr_popularity_enable_advanced"]' => array('checked' => FALSE)
@@ -376,10 +345,24 @@ function apachesolr_popularity_advanced_form() {
   $init_damping_options = array( '0' => '0.0', '0.02' => '0.02', '0.1' => '0.1', '0.2' => '0.2', '0.5' => '0.5', '1' => '1', '2' => '2', '5' => '5' );
   $form['settings']['apachesolr_popularity_init_damping'] = array(
       '#type' => 'select',
-      '#title' => t('Initial dampening'),
+      '#title' => t('Initial node popularity decay time'),
       '#default_value' => (string) variable_get('apachesolr_popularity_init_damping', '0.2'),
       '#options' => $init_damping_options,
-      '#description' => t("Number of days until the popularity is halfway in between the initial popularity and the actual popularity.<r> 0 = Replaced at first popularity estimate, 0.2 = About five hours, 2 = Two days."),
+      '#description' => t("Number of days until the popularity is halfway in between the initial popularity and the actual popularity.<br>I.e., how quickly the initial node popularity disapears.<br> 0 = Replaced at first popularity estimate, 0.2 = After about five hours, 2 = After two days."),
+      '#states' => array(
+        'disabled' => array(
+          ':input[name="apachesolr_popularity_enable_advanced"]' => array('checked' => FALSE)
+        ),
+      ),
+  );
+    
+  $low_pop_influence_options = array( '0' => '0', '0.2' => '0.2', '0.5' => '0.5', '1' => '1', '2' => '2' );
+  $form['settings']['apachesolr_popularity_low_pop_influence'] = array(
+      '#type' => 'select',
+      '#title' => t('Low-popularity influence'),
+      '#default_value' => (string) variable_get('apachesolr_popularity_low_pop_influence', '1'),
+      '#options' => $low_pop_influence_options,
+      '#description' => t("How easily nodes with low popularity come up in the search results.<br> 0 = Found difficultly, 1 = Typical, 2 = Found easily"),
       '#states' => array(
         'disabled' => array(
           ':input[name="apachesolr_popularity_enable_advanced"]' => array('checked' => FALSE)
@@ -414,12 +397,6 @@ function apachesolr_popularity_advanced_form_submit($form, &$form_state) {
   // Checks if popularity compression has changed.  Is yes, send data to Solr
   if ( $form_state['values']['apachesolr_popularity_compression'] != variable_get('apachesolr_popularity_compression') ) {
     variable_set('apachesolr_popularity_compression', $form_state['values']['apachesolr_popularity_compression']);
-    $send_to_solr = true;
-  }
-  
-  // Checks if log normalization base has changed.  Is yes, send data to Solr
-  if ( $form_state['values']['apachesolr_popularity_log_base'] != variable_get('apachesolr_popularity_log_base') ) {
-    variable_set('apachesolr_popularity_log_base', $form_state['values']['apachesolr_popularity_log_base']);
     $send_to_solr = true;
   }
   

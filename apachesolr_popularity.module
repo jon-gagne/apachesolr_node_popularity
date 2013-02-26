@@ -388,10 +388,7 @@ function _normalize_pop_log($popularity, $pop_max, $pop_min, $smoothing_factor=1
   $pop_norm = $pop_max - $pop_min;
   if ( $pop_norm < 1.0 ) $pop_norm = 1.0;
   
-  // Get log base
-  $base = variable_get('apachesolr_popularity_log_base', 2.0);
-  
-  return (log($smoothing_factor + ($popularity - $pop_min), $base) / log($smoothing_factor + $pop_norm, $base));
+  return (log($smoothing_factor + ($popularity - $pop_min)) / log($smoothing_factor + $pop_norm));
 }
 
 
