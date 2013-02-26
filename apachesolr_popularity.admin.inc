@@ -145,7 +145,7 @@ function apachesolr_popularity_settings_form() {
   );
   $form['basic_config']['apachesolr_popularity_disable_frontpage'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Disable popularity tracking for the front page'),
+    '#title' => t('Do not track the front page'),
     '#default_value' => variable_get('apachesolr_popularity_disable_frontpage', 1),
     '#description' => t('Due to the high number of views of most front pages, disabling popularity tracking of it will generally improve search results.'),
     '#default_value' => variable_get('apachesolr_popularity_disable_frontpage', TRUE),
