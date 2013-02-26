@@ -331,7 +331,7 @@ function apachesolr_popularity_advanced_form() {
   $init_popularity_options = array( 'Lowest' => 'Lowest', 'Low' => 'Low', 'Average' => 'Average', 'High' => 'High', 'Highest' => 'Highest' );
   $form['settings']['apachesolr_popularity_init_popularity_quantity'] = array(
       '#type' => 'select',
-      '#title' => t('Initial node popularity'),
+      '#title' => t('Initial popularity'),
       '#default_value' => (string) variable_get('apachesolr_popularity_init_popularity_quantity', 'Average'),
       '#options' => $init_popularity_options,
       '#description' => t("Sets inital popularity for newly tracked nodes.<br>Lets the initial popularity of new nodes to be boosted."),
@@ -345,7 +345,7 @@ function apachesolr_popularity_advanced_form() {
   $init_damping_options = array( '0' => '0.0', '0.02' => '0.02', '0.1' => '0.1', '0.2' => '0.2', '0.5' => '0.5', '1' => '1', '2' => '2', '5' => '5' );
   $form['settings']['apachesolr_popularity_init_damping'] = array(
       '#type' => 'select',
-      '#title' => t('Initial node popularity decay time'),
+      '#title' => t('Initial popularity decay time'),
       '#default_value' => (string) variable_get('apachesolr_popularity_init_damping', '0.2'),
       '#options' => $init_damping_options,
       '#description' => t("Number of days until the popularity is halfway in between the initial popularity and the actual popularity.<br>I.e., how quickly the initial node popularity disapears.<br> 0 = Replaced at first popularity estimate, 0.2 = After about five hours, 2 = After two days."),
