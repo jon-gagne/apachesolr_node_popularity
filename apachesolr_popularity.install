@@ -3,14 +3,14 @@
 /**
  * @file
  * Install, update, and uninstall functions for the Apache Solr Popularity module.
- * 
+ *
  * @author Jonathan Gagne (jongagne)
  *   @see drupal.org/user/2409764
  */
 
 /**
  * Implements hook_uninstall().
- * 
+ *
  * Cleans up permanent variables
  */
 function apachesolr_popularity_uninstall() {
@@ -21,7 +21,7 @@ function apachesolr_popularity_uninstall() {
   variable_del('apachesolr_popularity_timestamp_last');
   variable_del('apachesolr_popularity_timestamp_current');
   variable_del('apachesolr_popularity_influence');
-  variable_del('apachesolr_popularity_forgetting_window');  
+  variable_del('apachesolr_popularity_forgetting_window');
   variable_del('apachesolr_popularity_only_published');
   variable_del('apachesolr_popularity_disable_frontpage');
   variable_del('apachesolr_popularity_enable_advanced');
@@ -30,16 +30,16 @@ function apachesolr_popularity_uninstall() {
   variable_del('apachesolr_popularity_compression');
   variable_del('apachesolr_popularity_low_pop_influence');
   variable_del('apachesolr_popularity_count_recent');
-  variable_del('apachesolr_popularity_daily_count_average');  
+  variable_del('apachesolr_popularity_daily_count_average');
   variable_del('apachesolr_popularity_average_popularity');
 }
 
 /**
  * Implements hook_install().
- * 
+ *
  * Initializes permanent variables.
  */
-function apachesolr_popularity_install() {  
+function apachesolr_popularity_install() {
   // Setting initial values
   variable_set('apachesolr_popularity_influence', '2');
   variable_set('apachesolr_popularity_forgetting_window', '5');
@@ -58,12 +58,12 @@ function apachesolr_popularity_install() {
 
 /**
  * Implements hook_enable().
- * 
+ *
  * Initializes popularity tracking tables.
  */
-function apachesolr_popularity_enable() {  
+function apachesolr_popularity_enable() {
   // Tracks time
-  variable_set('apachesolr_popularity_timestamp_initial', REQUEST_TIME);  
+  variable_set('apachesolr_popularity_timestamp_initial', REQUEST_TIME);
   variable_set('apachesolr_popularity_timestamp_last', REQUEST_TIME);
   variable_set('apachesolr_popularity_timestamp_current', REQUEST_TIME);
   variable_set('apachesolr_popularity_enable_tracker', 0);                   // tracking must be enabled in settings
@@ -71,7 +71,7 @@ function apachesolr_popularity_enable() {
 }
 
 
- 
+
 /**
  * Implements hook_schema().
  */
@@ -85,7 +85,7 @@ function apachesolr_popularity_schema() {
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
-      ),      
+      ),
       'recentcount' => array(
         'description' => 'The total number of times the {node} has been viewed since last update.',
         'type' => 'int',
@@ -120,8 +120,8 @@ function apachesolr_popularity_schema() {
       ),
         'flag' => array(
         'description' => 'Popularity tracking flag.',
-        'type' => 'int',    
-        'unsigned' => TRUE,   
+        'type' => 'int',
+        'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0,
         'size' => 'tiny',
