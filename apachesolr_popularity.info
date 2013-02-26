@@ -2,6 +2,7 @@ name = Apache Solr Node Popularity
 description = Incorporate node popularity into Solr ranking
 dependencies[] = search
 dependencies[] = apachesolr
+dependencies[] = apachesolr_confgen
 package = Search Toolkit
 core = 7.x
 configure = admin/config/search/apachesolr/popularity
