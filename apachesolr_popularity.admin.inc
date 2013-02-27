@@ -154,42 +154,18 @@ function apachesolr_popularity_settings_form() {
     '#default_value' => (string) variable_get('apachesolr_popularity_forgetting_window', '5'),
     '#options' => $forgetting_window_options,
     '#description' => t('Older popularity values begin to fade off after about this many days.<br /> The lower the value is, the more that newer popularity measurements are biased positively.'),
-    /*
-    '#states' => array(
-      'enabled' => array(
-        ':input[name="apachesolr_popularity_enable_tracker"]' => array('checked' => TRUE),
-        ':input[name="apachesolr_popularity_solr_data_dir"]' => array('empty' => FALSE)
-      ),
-    ),
-     */
   );
   $form['basic_config']['apachesolr_popularity_only_published'] = array(
     '#type' => 'checkbox',
     '#title' => t('Only track published pages'),
     '#description' => t("Pages may receve a number of hits during creation, which may not reflect the popularity of the node at query time.<br />Note: a page is considered published if the page's publish field is checked."),
     '#default_value' => variable_get('apachesolr_popularity_only_published', TRUE),
-     /*
-    '#states' => array(
-      'enabled' => array(
-        ':input[name="apachesolr_popularity_enable_tracker"]' => array('checked' => TRUE),
-        ':input[name="apachesolr_popularity_solr_data_dir"]' => array('empty' => FALSE)
-      ),
-    ),
-      */
   );
   $form['basic_config']['apachesolr_popularity_disable_frontpage'] = array(
     '#type' => 'checkbox',
     '#title' => t('Do not track the front page'),
     '#description' => t('Due to the high number of views of most front pages, disabling popularity tracking of it will generally improve search results.'),
     '#default_value' => variable_get('apachesolr_popularity_disable_frontpage', TRUE),
-    /*
-    '#states' => array(
-      'enabled' => array(
-        ':input[name="apachesolr_popularity_enable_tracker"]' => array('checked' => TRUE),
-        ':input[name="apachesolr_popularity_solr_data_dir"]' => array('empty' => FALSE)
-      ),
-    ),
-     */
   );
   // Clear popularity values.
   $form['reset_fieldset'] = array(
@@ -200,14 +176,6 @@ function apachesolr_popularity_settings_form() {
     '#type' => 'checkbox',
     '#title' => t('Reset popularity values for all nodes.'),
     '#default_value' => FALSE,
-    /*
-    '#states' => array(
-      'enabled' => array(
-        ':input[name="apachesolr_popularity_enable_tracker"]' => array('checked' => TRUE),
-        ':input[name="apachesolr_popularity_solr_data_dir"]' => array('empty' => FALSE)
-      ),
-    ),
-     */
   );
   $form['reset_fieldset']['confirm_reset_fieldset'] = array(
     '#type' => 'fieldset',
@@ -286,10 +254,6 @@ function apachesolr_popularity_settings_form_submit($form, &$form_state) {
   if (($form_state['values']['apachesolr_popularity_enable_tracker'] == 0) AND (variable_get('apachesolr_popularity_enable_tracker') == 1)) {
     variable_set('apachesolr_popularity_enable_tracker', $form_state['values']['apachesolr_popularity_enable_tracker']);
     $send_to_solr = TRUE;
-    // Fix strange bug (possibly core bug).  Value gets set to FALSE when the
-    // the checkbox is disabled.
-    //$form_state['values']['apachesolr_popularity_only_published'] = variable_get('apachesolr_popularity_only_published');
-    //$form_state['values']['apachesolr_popularity_disable_frontpage'] = variable_get('apachesolr_popularity_disable_frontpage');
     if ($form_state['values']['apachesolr_popularity_remove_data'] == 1) {
       _apachesolr_popularity_clear_tracking_data();
     }
