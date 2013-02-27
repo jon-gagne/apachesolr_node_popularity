@@ -5,13 +5,13 @@
  * Install, update, and uninstall functions for the Apache Solr Popularity module.
  *
  * @author Jonathan Gagne (jongagne)
- *   @see drupal.org/user/2409764
+ * @see drupal.org/user/2409764
  */
 
 /**
  * Implements hook_uninstall().
  *
- * Cleans up permanent variables
+ * Cleans up permanent variables.
  */
 function apachesolr_popularity_uninstall() {
   // Remove variables.
@@ -25,7 +25,7 @@ function apachesolr_popularity_uninstall() {
   variable_del('apachesolr_popularity_only_published');
   variable_del('apachesolr_popularity_disable_frontpage');
   variable_del('apachesolr_popularity_enable_advanced');
-  variable_del('apachesolr_popularity_init_damping') ;
+  variable_del('apachesolr_popularity_init_damping');
   variable_del('apachesolr_popularity_init_popularity_quantity');
   variable_del('apachesolr_popularity_compression');
   variable_del('apachesolr_popularity_low_pop_influence');
@@ -34,19 +34,20 @@ function apachesolr_popularity_uninstall() {
   variable_del('apachesolr_popularity_average_popularity');
 }
 
+
 /**
  * Implements hook_install().
  *
  * Initializes permanent variables.
  */
 function apachesolr_popularity_install() {
-  // Setting initial values
+  // Setting initial values.
   variable_set('apachesolr_popularity_influence', '2');
   variable_set('apachesolr_popularity_forgetting_window', '5');
   variable_set('apachesolr_popularity_disable_frontpage', TRUE);
   variable_set('apachesolr_popularity_only_published', TRUE);
   variable_set('apachesolr_popularity_enable_advanced', FALSE);
-  variable_set('apachesolr_popularity_init_damping', '0.0') ;
+  variable_set('apachesolr_popularity_init_damping', '0.0');
   variable_set('apachesolr_popularity_init_popularity_quantity', 'Average');
   variable_set('apachesolr_popularity_compression', 'S');
   variable_set('apachesolr_popularity_low_pop_influence', '1');
@@ -55,28 +56,27 @@ function apachesolr_popularity_install() {
 }
 
 
-
 /**
  * Implements hook_enable().
  *
  * Initializes popularity tracking tables.
  */
 function apachesolr_popularity_enable() {
-  // Tracks time
+  // Tracks time.
   variable_set('apachesolr_popularity_timestamp_initial', REQUEST_TIME);
   variable_set('apachesolr_popularity_timestamp_last', REQUEST_TIME);
   variable_set('apachesolr_popularity_timestamp_current', REQUEST_TIME);
-  variable_set('apachesolr_popularity_enable_tracker', 0);                   // tracking must be enabled in settings
+  // Tracking must be enabled in settings.
+  variable_set('apachesolr_popularity_enable_tracker', 0);
   variable_set('apachesolr_popularity_count_recent', 0);
 }
-
 
 
 /**
  * Implements hook_schema().
  */
 function apachesolr_popularity_schema() {
-  // Database schema
+  // Database schema.
   $schema['apachesolr_popularity_counter'] = array(
     'description' => 'Access statistics for {node}s.',
     'fields' => array(
@@ -118,7 +118,7 @@ function apachesolr_popularity_schema() {
         'default' => 0.0,
         'size' => 'medium',
       ),
-        'flag' => array(
+      'flag' => array(
         'description' => 'Popularity tracking flag.',
         'type' => 'int',
         'unsigned' => TRUE,
@@ -132,4 +132,3 @@ function apachesolr_popularity_schema() {
 
   return $schema;
 }
-
