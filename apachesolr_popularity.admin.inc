@@ -133,7 +133,6 @@ function apachesolr_popularity_settings_form() {
   $form['basic_config']['apachesolr_popularity_only_published'] = array(
     '#type' => 'checkbox',
     '#title' => t('Only track published pages'),
-    '#default_value' => variable_get('apachesolr_popularity_only_published', 1),
     '#description' => t('Pages may receve a number of hits during creation, which may not reflect the popularity of the node at query time.<br />Note: a page is considered published if the page\'s publish field is checked.'),
     '#default_value' => variable_get('apachesolr_popularity_only_published', TRUE),
     '#states' => array(
@@ -146,7 +145,6 @@ function apachesolr_popularity_settings_form() {
   $form['basic_config']['apachesolr_popularity_disable_frontpage'] = array(
     '#type' => 'checkbox',
     '#title' => t('Do not track the front page'),
-    '#default_value' => variable_get('apachesolr_popularity_disable_frontpage', 1),
     '#description' => t('Due to the high number of views of most front pages, disabling popularity tracking of it will generally improve search results.'),
     '#default_value' => variable_get('apachesolr_popularity_disable_frontpage', TRUE),
     '#states' => array(
@@ -234,8 +232,18 @@ function apachesolr_popularity_settings_form_submit($form, &$form_state) {
 
   // Sets up popularity tracking table
   if ( ($form_state['values']['apachesolr_popularity_enable_tracker']==1) AND (variable_get('apachesolr_popularity_enable_tracker')==0) ) {
+    variable_set('apachesolr_popularity_enable_tracker', $form_state['values']['apachesolr_popularity_enable_tracker']);
     _track_new_nodes();
     $send_to_solr = TRUE;
+  }
+  
+  // Disables popularity tracking table
+  if ( ($form_state['values']['apachesolr_popularity_enable_tracker']==0) AND (variable_get('apachesolr_popularity_enable_tracker')==1) ) {
+    variable_set('apachesolr_popularity_enable_tracker', $form_state['values']['apachesolr_popularity_enable_tracker']);
+    $send_to_solr = TRUE;
+    // Fix strange bug (possibly core bug).  Value gets set to FALSE when the the checkbox is disabled.
+    $form_state['values']['apachesolr_popularity_only_published'] = variable_get('apachesolr_popularity_only_published');
+    $form_state['values']['apachesolr_popularity_disable_frontpage'] = variable_get('apachesolr_popularity_disable_frontpage');
   }
 
   // Checks if Solr data directory has changed.  If yes, than change it now before other data is sent to Solr
@@ -278,8 +286,19 @@ function apachesolr_popularity_settings_form_submit($form, &$form_state) {
     }
     else {
       // If everything is okay, send it to Solr
-      drupal_set_message(t("Popularity data sent to Apache Solr."));
-      _apachesolr_popularity_send_to_solr();
+      if ($form_state['values']['apachesolr_popularity_enable_tracker']) {
+        drupal_set_message(t("Popularity data sent to Apache Solr."));
+        _apachesolr_popularity_send_to_solr();
+      }
+      // Remove data from solr
+      else {
+        if (_apachesolr_popularity_remove_data_from_solr()) {
+          drupal_set_message(t("Popularity data removed from Apache Solr."));
+        }
+        else {
+          drupal_set_message(t("Popularity is no longer being tracked but the data file (external_eff_popularity) was not able to be removed."));
+        }
+      }
     }
   }
 }

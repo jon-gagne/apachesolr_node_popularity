@@ -404,22 +404,8 @@ function _apachesolr_popularity_send_to_solr() {
   // Write popularity from db to disk and copies it to Solr data dir
   _apachesolr_popularity_send_data_to_solr();
 
-  // Get default Solr environment ID
-  $default_env_id = variable_get('apachesolr_default_environment', 'solr');
-  // Get URL of the default Solr server
-  $default_env_url = db_query('SELECT url FROM {apachesolr_environment} WHERE env_id = :env_id', array(':env_id' => $default_env_id))->fetchField();
   // Reload Solr cache
-  $xml = file_get_contents($default_env_url . '/reloadCache');
-
-  /* OPTIONAL: check $xml to see if the status was good
-   *
-   * Result should look something like this if the reload was successful (although does not show if if the data was added successfully):
-   *
-   * <?xml version="1.0" encoding="UTF-8"?>
-   * <response>
-   * <lst name="responseHeader"><int name="status">0</int><int name="QTime">41</int></lst>
-   * </response>
-   */
+  _apachesolr_popularity_reload_cache();
 }
 
 
@@ -517,6 +503,45 @@ function _apachesolr_popularity_send_data_to_solr() {
   }
 }
 
+
+/**
+ * Removes popularity data from Solr data directory
+ */
+function _apachesolr_popularity_remove_data_from_solr() {
+  // Get Solr data directory
+  $solr_data_dir = variable_get('apachesolr_popularity_solr_data_dir', '');
+  // Name of the file containing the popularity data
+  $filename = 'external_eff_popularity';
+  // Delete file
+  $status = unlink($solr_data_dir . $filename);
+  
+  _apachesolr_popularity_reload_cache();
+  
+  return $status;
+}
+
+
+/**
+ * Reloads Solr Cache
+ */
+function _apachesolr_popularity_reload_cache() {
+  // Get default Solr environment ID
+  $default_env_id = variable_get('apachesolr_default_environment', 'solr');
+  // Get URL of the default Solr server
+  $default_env_url = db_query('SELECT url FROM {apachesolr_environment} WHERE env_id = :env_id', array(':env_id' => $default_env_id))->fetchField();
+  // Reload Solr cache
+  $xml = file_get_contents($default_env_url . '/reloadCache');
+
+  /* OPTIONAL: check $xml to see if the status was good
+   *
+   * Result should look something like this if the reload was successful (although does not show if if the data was added successfully):
+   *
+   * <?xml version="1.0" encoding="UTF-8"?>
+   * <response>
+   * <lst name="responseHeader"><int name="status">0</int><int name="QTime">41</int></lst>
+   * </response>
+   */
+}
 
 /**
  * Formats an item for display from nid
