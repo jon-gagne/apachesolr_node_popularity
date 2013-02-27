@@ -707,7 +707,7 @@ function _apachesolr_popularity_get_node_flags($node) {
  */
 function _apachesolr_popularity_get_nid_flags($nid) {
   // Get node status from nid
-  $node_status = db_query("SELECT status FROM {node} WHERE nid = :nid", 0, 1, array(':nid' => $nid))->fetchField();
+  $node_status = db_query_range("SELECT status FROM {node} WHERE nid = :nid", 0, 1, array(':nid' => $nid))->fetchField();
   // Set flags
   $flag = 0x0;
   if (!$node_status) setflag($flag, UNPUBLISHED);      // Get the node's published status
