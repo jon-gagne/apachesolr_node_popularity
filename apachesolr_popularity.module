@@ -574,8 +574,12 @@ function _apachesolr_popularity_format_item($nid) {
  * Run each time a node is created
  */
 function apachesolr_popularity_node_insert($node) {
-  // Begin tracking node
-  _apachesolr_popularity_add_node($node);
+  
+  // If popularity tracking is enabled
+  if (variable_get('apachesolr_popularity_enable_tracker', 0)) {
+    // Begin tracking node
+    _apachesolr_popularity_add_node($node);
+  }
 }
 
 
@@ -643,9 +647,12 @@ function apachesolr_popularity_node_delete($node) {
 /**
  * Implements hook_apachesolr_query_alter().
  */
-function apachesolr_popularity_apachesolr_query_alter(DrupalSolrQueryInterface $query) {
-  // Allow node popularity ranking values to be incorporated into Solr ranking
-  $query->addParam('boost', 'eff_popularity');
+function apachesolr_popularity_apachesolr_query_alter(DrupalSolrQueryInterface $query) {  
+  // If popularity tracking is enabled
+  if (variable_get('apachesolr_popularity_enable_tracker', 0)) {
+    // Allow node popularity ranking values to be incorporated into Solr ranking
+    $query->addParam('boost', 'eff_popularity');
+  }
 }
 
 /**
