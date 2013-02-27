@@ -131,7 +131,7 @@ function apachesolr_popularity_cron() {
 
   // Update daily hit average
   _apachesolr_popularity_update_daily_count_average();
-
+  
   // Don't bother updating if there was no browsing activity
   if (variable_get('apachesolr_popularity_count_recent', 0)) {
 
@@ -236,7 +236,7 @@ function _apachesolr_popularity_update_daily_count_average() {
  * Updates node popularity
  */
 function _apachesolr_popularity_update_popularity() {
-
+  
   // Get count since last update
   $recent_count = variable_get('apachesolr_popularity_count_recent', 0);
   // Don't update if there was no activity
@@ -780,4 +780,13 @@ function _apachesolr_popularity_update_initial_popularity($old_popularity) {
       )
       ->condition('popularity', $old_popularity, '=')
       ->execute();
+}
+
+/**
+ * Remove tracking data from the database
+ */
+function _apachesolr_popularity_clear_tracking_data() {
+  // Detele tracking table
+  db_delete('apachesolr_popularity_counter')
+        ->execute();
 }

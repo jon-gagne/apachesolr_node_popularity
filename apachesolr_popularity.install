@@ -51,7 +51,7 @@ function apachesolr_popularity_install() {
   variable_set('apachesolr_popularity_compression', 'S');
   variable_set('apachesolr_popularity_low_pop_influence', '1');
   variable_set('apachesolr_popularity_daily_count_average', 10);
-  variable_set('apachesolr_popularity_average_popularity', 10);
+  variable_set('apachesolr_popularity_average_popularity', 5);
 }
 
 
