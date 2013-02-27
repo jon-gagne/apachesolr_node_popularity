@@ -790,3 +790,12 @@ function _apachesolr_popularity_clear_tracking_data() {
   db_delete('apachesolr_popularity_counter')
         ->execute();
 }
+
+/**
+ * Reset tracking timer
+ */
+function _apachesolr_popularity_reset_timer() {  
+  variable_set('apachesolr_popularity_timestamp_initial', REQUEST_TIME);
+  variable_set('apachesolr_popularity_timestamp_last', REQUEST_TIME);
+  variable_set('apachesolr_popularity_timestamp_current', REQUEST_TIME);
+}

@@ -265,7 +265,8 @@ function apachesolr_popularity_settings_form_submit($form, &$form_state) {
   // Sets up popularity tracking table
   if ( ($form_state['values']['apachesolr_popularity_enable_tracker']==1) AND (variable_get('apachesolr_popularity_enable_tracker')==0) ) {
     variable_set('apachesolr_popularity_enable_tracker', $form_state['values']['apachesolr_popularity_enable_tracker']);
-    _track_new_nodes();
+    _apachesolr_popularity_reset_timer();
+    _apachesolr_popularity_track_new_nodes();
     $send_to_solr = TRUE;
   }
   
@@ -477,7 +478,7 @@ function apachesolr_popularity_advanced_form_submit($form, &$form_state) {
 /**
  * Track all nodes not currently being tracked
  */
-function _track_new_nodes() {
+function _apachesolr_popularity_track_new_nodes() {
 
   // Find nodes that are in Drupal's node table that aren't in the apachesolr_popularity_counter table
   $node_create_list = db_query(
