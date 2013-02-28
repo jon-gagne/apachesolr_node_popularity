@@ -562,7 +562,7 @@ function _apachesolr_popularity_reload_cache() {
 
   // Check if it failed.
   if (!$xml) {
-    drupal_set_message(t("Apache Solr not configured correctly (see Apache Solr Popularity README.txt for more details).", 'error'));
+    drupal_set_message(t("Apache Solr not configured correctly (see Apache Solr Popularity README.txt for more details)."), 'error');
   }
   /* OPTIONAL: check $xml to see if the status was good.
    *
