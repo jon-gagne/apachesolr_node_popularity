@@ -558,10 +558,11 @@ function _apachesolr_popularity_reload_cache() {
   // Get URL of the default Solr server.
   $default_env_url = db_query('SELECT url FROM {apachesolr_environment} WHERE env_id = :env_id', array(':env_id' => $default_env_id))->fetchField();
   // Reload Solr cache.
-  try {
-    $xml = file_get_contents($default_env_url . '/reloadCache');
-  } catch (Exception $e) {
-    drupal_set_message(t("Apache Solr not configured correctly (see Apache Solr Popularity README.txt for more details)."), 'error');
+  $xml = file_get_contents($default_env_url . '/reloadCache');
+
+  // Check if it failed.
+  if (!$xml) {
+    drupal_set_message(t("Apache Solr not configured correctly (see Apache Solr Popularity README.txt for more details).", 'error'));
   }
   /* OPTIONAL: check $xml to see if the status was good.
    *
