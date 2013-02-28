@@ -658,8 +658,10 @@ function _apachesolr_popularity_get_front_page_nid() {
   $front_url = trim($front_url, '/');
   // Extract the node id from the URL.
   $front = explode('/', $front_url);
-  if ($front[0] == 'node' && ctype_digit($front[1])) {
-    $front_nid = $front[1];
+  if (isset($front) AND isset($front[0]) AND isset($front[1])) {
+    if ($front[0] == 'node' && ctype_digit($front[1])) {
+      $front_nid = $front[1];
+    }
   }
   return $front_nid;
 }
