@@ -560,6 +560,10 @@ function _apachesolr_popularity_reload_cache() {
   // Reload Solr cache.
   $xml = file_get_contents($default_env_url . '/reloadCache');
 
+  // Check if it failed.
+  if (!$xml) {
+    drupal_set_message(t("Apache Solr not configured correctly (see Apache Solr Popularity README.txt for more details)."));
+  }
   /* OPTIONAL: check $xml to see if the status was good.
    *
    * Result should look something like this (below) if the reload was successful
