@@ -420,7 +420,7 @@ function apachesolr_popularity_advanced_form_submit($form, &$form_state) {
 
   // Checks if initial damping has changed.
   if ($form_state['values']['apachesolr_popularity_init_damping'] != variable_get('apachesolr_popularity_init_damping')) {
-    drupal_set_message(t("Initial damping changed.  This will effect future popularity values only."));
+    drupal_set_message(t("Initial popularity decay time changed.  This will effect future popularity values only."));
   }
 
   // Checks if initial popularity has changed.
