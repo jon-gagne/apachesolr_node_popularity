@@ -158,7 +158,7 @@ function apachesolr_popularity_settings_form() {
   $form['basic_config']['apachesolr_popularity_only_published'] = array(
     '#type' => 'checkbox',
     '#title' => t('Only track published pages'),
-    '#description' => t("Pages may receve a number of hits during creation, which may not reflect the popularity of the node at query time.<br />Note: a page is considered published if the page's publish field is checked."),
+    '#description' => t("Pages may receive a number of hits during creation, which may not reflect the popularity of the node at query time.<br />Note: a page is considered published if the page's publish field is checked."),
     '#default_value' => variable_get('apachesolr_popularity_only_published', TRUE),
   );
   $form['basic_config']['apachesolr_popularity_disable_frontpage'] = array(
